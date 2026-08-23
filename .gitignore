@@ -1,0 +1,6 @@
+# 项目缓存目录（含本地工作记忆，不应上传）
+.workbuddy/
+
+# 可选：若后续加 node/python 依赖目录再补
+node_modules/
+__pycache__/
