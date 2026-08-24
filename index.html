@@ -281,14 +281,22 @@
         .skills-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         .skill-group { padding: 18px 20px 20px; }
         .skill-group .group-title { font-family: "Archivo Black", sans-serif; font-size: .92rem; color: var(--c-ink); border-bottom: 3px solid var(--c-border); padding-bottom: 8px; margin-bottom: 12px; }
-        .skill-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .skill-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 16px; }
         .skill-item:last-child { margin-bottom: 0; }
         .skill-item .name { font-size: .9rem; font-weight: 600; min-width: 84px; color: var(--c-ink); }
-        .skill-bar { flex: 1; height: 12px; background: var(--c-surface); border: 2px solid var(--c-border); overflow: hidden; }
+        .skill-bar { flex: 1 1 120px; height: 12px; background: var(--c-surface); border: 2px solid var(--c-border); overflow: hidden; }
         /* display:block 是关键修复：span 默认 inline，width/height 对 inline 元素无效，进度条会恒为 0 宽 */
-        .skill-bar .fill { display: block; height: 100%; background: var(--col-mint); animation: skillGrow .9s cubic-bezier(.22,.9,.35,1.1) .15s both; }
+        .skill-bar .fill { display: block; height: 100%; width: 0; background: var(--col-mint); }
+        .skill-bar .fill.grow { animation: skillGrow .9s cubic-bezier(.22,.9,.35,1.1) both; }
         @keyframes skillGrow { from { width: 0; } }
         .skill-item .level { font-size: .74rem; color: var(--c-muted); min-width: 38px; text-align: right; font-weight: 600; }
+        .skill-item .skill-desc { flex-basis: 100%; font-size: .82rem; color: var(--c-muted); margin-top: 2px; line-height: 1.5; }
+        .skill-item .level-tag {
+            font-size: .7rem; font-weight: 700; padding: 1px 8px; border: 2px solid #000; white-space: nowrap; color: #000;
+        }
+        .level-tag.lv-master { background: var(--col-mint); }
+        .level-tag.lv-familiar { background: var(--col-sun); }
+        .level-tag.lv-know { background: var(--col-sky); }
         .skill-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 
         /* ===== 作品集 ===== */
@@ -317,11 +325,43 @@
         .cert-card .cert-detail { font-size: .9rem; color: var(--c-muted); }
         .cert-card .cert-year { font-size: .78rem; font-weight: 700; color: #000; background: var(--col-sky); border: 2px solid #000; display: inline-block; margin-top: 6px; padding: 1px 10px; }
 
-        /* ===== 证书图片画廊 ===== */
-        .cert-gallery { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-        .cert-card-img { padding: 12px 12px 16px; text-align: center; }
-        .cert-card-img img { width: 100%; height: auto; object-fit: contain; border: 2px solid var(--c-border); background: var(--c-bg); display: block; cursor: zoom-in; transition: transform .15s ease; }
-        .cert-card-img img:hover { transform: scale(1.02); }
+        /* ===== 证书图片画廊（横向滚动画廊） ===== */
+        .cert-gallery {
+            margin-top: 28px;
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 6px 4px 16px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        .cert-gallery::-webkit-scrollbar { height: 8px; }
+        .cert-gallery::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 0; }
+        .cert-gallery::-webkit-scrollbar-track { background: var(--c-surface); }
+        .cert-card-img {
+            flex: 0 0 auto;
+            width: clamp(220px, 70vw, 280px);
+            scroll-snap-align: start;
+            padding: 12px 12px 16px;
+            text-align: center;
+            overflow: hidden;
+        }
+        .cert-card-img .img-frame {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            overflow: hidden;
+            border: 2px solid var(--c-border);
+            background: var(--c-bg);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cert-card-img img {
+            width: 100%; height: 100%; object-fit: contain;
+            background: var(--c-bg); display: block; cursor: zoom-in;
+            transition: transform .25s cubic-bezier(.22,.9,.35,1.1);
+        }
+        .cert-card-img:hover img { transform: scale(1.12); }
         .cert-card-img .cert-title { font-weight: 700; font-size: .92rem; margin-top: 10px; color: var(--c-ink); }
         .cert-card-img .cert-desc { font-size: .8rem; color: var(--c-muted); margin-top: 4px; }
 
@@ -645,10 +685,22 @@
             }],
             projects: [],
             skills: {
-                '办公软件': [ { name: 'Word', level: 68 }, { name: 'PowerPoint', level: 65 }, { name: 'Excel', level: 38 } ],
-                'AI与数字化': [ { name: '数据标注基础', level: 70 }, { name: '模型训练认知', level: 65 }, { name: '人机协作意识', level: 75 } ],
-                '写作与表达': [ { name: '文学创作', level: 72 }, { name: '逻辑叙事', level: 68 }, { name: '观点提炼', level: 62 } ],
-                '语言能力': [ { name: '中文 (母语)', level: 100 } ]
+                '办公软件': [
+                    { name: 'Word', level: 68, desc: '能独立完成排版规范、图文混排的长文档撰写与校对。' },
+                    { name: 'PowerPoint', level: 65, desc: '可制作结构清晰、风格统一的演示文稿，满足汇报与展示需要。' },
+                    { name: 'Excel', level: 38, desc: '了解基础表格录入与简单公式，尚处于入门学习阶段。' }
+                ],
+                'AI与数字化': [
+                    { name: '数据标注基础', level: 62, desc: '熟悉常见标注规范与流程，能按要求完成基础数据标注任务。' },
+                    { name: '模型训练认知', level: 52, desc: '了解监督/非监督学习等基础概念，对训练流程有初步认知。' },
+                    { name: '人机协作意识', level: 70, desc: '在实践中形成较为成熟的 AI 工具协作习惯，但仍需持续深化。' }
+                ],
+                '写作与表达': [
+                    { name: '文学创作', level: 72, desc: '具备较强叙事与文字驾驭能力，获省级作文竞赛奖项印证。' },
+                    { name: '逻辑叙事', level: 66, desc: '能围绕论点组织材料、理清脉络，输出结构完整的文章。' },
+                    { name: '观点提炼', level: 58, desc: '可从素材中归纳核心观点，复杂议题的提炼仍需练习。' }
+                ],
+                '语言能力': [ { name: '中文 (母语)', level: 100, desc: '母语级听说读写，书面表达流畅、准确。' } ]
             },
             portfolio: [
                 { title: '个人简历网站', tag: '独立开发', desc: '完整响应式简历站：导航、深浅色模式、打印适配、证书画廊', thumb: 'var(--col-mint)', link: '#hero', cta: '预览本站' },
@@ -825,6 +877,11 @@
 
             // 技能矩阵
             const skillsGrid = $('#skillsGrid');
+            function levelTagOf(level) {
+                if (level >= 75) return { cls: 'lv-master', text: '掌握' };
+                if (level >= 55) return { cls: 'lv-familiar', text: '熟悉' };
+                return { cls: 'lv-know', text: '了解' };
+            }
             Object.entries(resume.skills).forEach(([groupName, items], gi) => {
                 const g = document.createElement('div');
                 g.className = 'brutal-card skill-group';
@@ -837,14 +894,38 @@
                 } else {
                     let rows = '';
                     items.forEach(it => {
-                        rows += `<div class="skill-item"><span class="name">${esc(it.name)}</span><span class="skill-bar"><span class="fill" style="width:${it.level}%; background:${head};"></span></span><span class="level">${it.level}%</span></div>`;
+                        const tag = levelTagOf(it.level);
+                        rows += `<div class="skill-item">`
+                            + `<span class="name">${esc(it.name)}</span>`
+                            + `<span class="skill-bar"><span class="fill" data-level="${it.level}" style="background:${head};"></span></span>`
+                            + `<span class="level">${it.level}%</span>`
+                            + `<span class="level-tag ${tag.cls}">${tag.text}</span>`
+                            + (it.desc ? `<div class="skill-desc">${esc(it.desc)}</div>` : '')
+                            + `</div>`;
                     });
                     g.innerHTML = `<div class="group-title" style="border-color:${head};">${esc(groupName)}</div>${rows}`;
                 }
                 skillsGrid.appendChild(g);
             });
-            // 进度条宽度已内联写入（= 对应数值），CSS `skillGrow` 动画负责从 0 生长到目标值，
-            // 不依赖 JS 时序，加载与主题切换时均稳定显示
+
+            // 进度条：能力矩阵滚入视口时，从 0 动画递增到目标百分比
+            const skillFills = $$('.skill-bar .fill');
+            if ('IntersectionObserver' in window && skillFills.length) {
+                const skillObs = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(e => {
+                        if (e.isIntersecting) {
+                            const fill = e.target;
+                            const target = parseInt(fill.getAttribute('data-level'), 10) || 0;
+                            fill.style.width = target + '%';
+                            fill.classList.add('grow');
+                            obs.unobserve(fill);
+                        }
+                    });
+                }, { threshold: 0.4, rootMargin: '0px 0px -10% 0px' });
+                skillFills.forEach(f => skillObs.observe(f));
+            } else {
+                skillFills.forEach(f => { f.style.width = (parseInt(f.getAttribute('data-level'),10)||0) + '%'; f.classList.add('grow'); });
+            }
 
             // 精选作品
             const pg = $('#portfolioGrid');
@@ -926,11 +1007,13 @@
                     card.className = 'brutal-card cert-card-img';
                     const base = img.src.replace(/\.(jpg|jpeg|png)$/i, '');
                     card.innerHTML = `
-                        <picture>
-                            <source srcset="${esc(base)}.webp 1x, ${esc(base)}.webp 2x" type="image/webp" sizes="(max-width: 480px) 50vw, 240px">
-                            <source srcset="${esc(img.src)} 1x, ${esc(img.src)} 2x" type="image/jpeg" sizes="(max-width: 480px) 50vw, 240px">
-                            <img src="${esc(img.src)}" alt="${esc(img.title)}" width="300" height="400" decoding="async" onerror="this.parentElement.style.display='none'">
-                        </picture>
+                        <div class="img-frame">
+                            <picture>
+                                <source srcset="${esc(base)}.webp 1x, ${esc(base)}.webp 2x" type="image/webp" sizes="(max-width: 480px) 70vw, 280px">
+                                <source srcset="${esc(img.src)} 1x, ${esc(img.src)} 2x" type="image/jpeg" sizes="(max-width: 480px) 70vw, 280px">
+                                <img src="${esc(img.src)}" alt="${esc(img.title)}" width="300" height="400" decoding="async" onerror="this.parentElement.parentElement.style.display='none'">
+                            </picture>
+                        </div>
                         <div class="cert-title">${esc(img.title)}</div>
                         <div class="cert-desc">${esc(img.desc)}</div>`;
                     gallery.appendChild(card);
@@ -971,10 +1054,16 @@
                 const pr = $('#printResume');
                 if (!pr) return;
                 const sk = resume.skills;
+                function lvl(t) { if (t >= 75) return '掌握'; if (t >= 55) return '熟悉'; return '了解'; }
                 let skillText = '';
                 for (const g in sk) {
-                    const names = sk[g].map(s => s.name).join('、');
-                    skillText += `<div class="p-skills"><strong>${esc(g)}：</strong>${esc(names)}</div>`;
+                    if (g === '语言能力') {
+                        const names = sk[g].map(s => `${s.name}（${esc(lvl(s.level))}）`).join('、');
+                        skillText += `<div class="p-skills"><strong>${esc(g)}：</strong>${esc(names)}</div>`;
+                        continue;
+                    }
+                    const rows = sk[g].map(s => `<div class="p-skills">· ${esc(s.name)} — <strong>${esc(lvl(s.level))}</strong>（${s.level}%）：${esc(s.desc || '')}</div>`).join('');
+                    skillText += `<div class="p-skills" style="margin-top:6px;"><strong>${esc(g)}</strong></div>${rows}`;
                 }
                 const expHtml = resume.experience.map(e => `
                     <div class="p-exp">
@@ -1031,16 +1120,18 @@
             // 导航高亮（ids 按页面 DOM 顺序排列，取最靠上的可见区块）
             const navLinks = $$('.navbar-links a');
             const ids = ['hero','stats','about','experience','projects','skills','portfolio','education','contact'];
-            const obs = new IntersectionObserver(es => {
-                let active = 'hero';
-                const visible = es.filter(e => e.isIntersecting);
-                if (visible.length) {
-                    visible.sort((a, b) => ids.indexOf(a.target.id) - ids.indexOf(b.target.id));
-                    active = visible[0].target.id;
-                }
-                navLinks.forEach(l => { const h = l.getAttribute('href').replace('#',''); l.setAttribute('aria-selected', h===active?'true':'false'); l.classList.toggle('active', h===active); });
-            }, { threshold: 0.3, rootMargin: '-64px 0px 0px 0px' });
-            ids.forEach(id => { const el = document.getElementById(id); if (el) obs.observe(el); });
+            if ('IntersectionObserver' in window) {
+                const obs = new IntersectionObserver(es => {
+                    let active = 'hero';
+                    const visible = es.filter(e => e.isIntersecting);
+                    if (visible.length) {
+                        visible.sort((a, b) => ids.indexOf(a.target.id) - ids.indexOf(b.target.id));
+                        active = visible[0].target.id;
+                    }
+                    navLinks.forEach(l => { const h = l.getAttribute('href').replace('#',''); l.setAttribute('aria-selected', h===active?'true':'false'); l.classList.toggle('active', h===active); });
+                }, { threshold: 0.3, rootMargin: '-64px 0px 0px 0px' });
+                ids.forEach(id => { const el = document.getElementById(id); if (el) obs.observe(el); });
+            }
 
             // 锚点平滑滚动（JS 接管，消除 file:// 下锚点导航的浏览器安全警告，并适配固定导航高度）
             $$('a[href^="#"]').forEach(a => {
@@ -1058,10 +1149,14 @@
 
             // 滚动进出场动画：板块进入视口时淡入上移，滚出视口时淡出（平滑进入与退出）
             const revEls = $$('.reveal');
-            const revObs = new IntersectionObserver(es => {
-                es.forEach(e => e.target.classList.toggle('in', e.isIntersecting));
-            }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-            revEls.forEach(el => revObs.observe(el));
+            if ('IntersectionObserver' in window) {
+                const revObs = new IntersectionObserver(es => {
+                    es.forEach(e => e.target.classList.toggle('in', e.isIntersecting));
+                }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+                revEls.forEach(el => revObs.observe(el));
+            } else {
+                revEls.forEach(el => el.classList.add('in'));
+            }
 
             // 返回顶部
             const bt = $('#backTop');
@@ -1072,7 +1167,7 @@
             const tt = $('.theme-toggle'); const ti = tt.querySelector('i');
             let stored = null;
             try { stored = localStorage.getItem('theme'); } catch (_) {}
-            if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            if (stored === 'dark' || (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.setAttribute('data-theme', 'dark'); ti.className = 'ri-sun-line';
             }
             tt.addEventListener('click', () => {
