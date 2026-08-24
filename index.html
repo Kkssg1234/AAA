@@ -393,23 +393,42 @@
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
         @media print {
-            body { padding-top: 0; background: #fff !important; background-image: none !important; color: #000 !important; overflow-x: visible; }
-            .navbar, .back-top, .cert-modal { display: none !important; }
-            .container { max-width: 100% !important; padding: 16px 20px !important; }
-            .brutal-card, .brutal-btn, .nav-link, .icon-btn, .stat-card, .cta-block, .hero-avatar, .cta-contact, .portfolio-card, .cert-card, .skill-group, .about-card, .brutal-badge, .brutal-sticker, .hero-contacts .contact-item, .brutal-tab, .edu-card, .cert-card-img, .self-eval, .exp-header .period, .project-header .role-tag, .edu-card .gaokao, .cert-card .cert-year {
-                box-shadow: none !important; border: 2px solid #000 !important; transform: none !important;
-            }
-            .hero-avatar { background: #fff !important; }
-            .js .reveal, .reveal { opacity: 1 !important; transform: none !important; }
-            .hero-content > *, .hero-visual { animation: none !important; opacity: 1 !important; transform: none !important; }
-            .skill-bar .fill { animation: none !important; }
-            .section { margin-top: 24px !important; page-break-inside: avoid; }
-            .tabs-panel { display: none !important; }
-            .tabs-panel.active { display: block !important; }
-            .highlight-card, .skill-group, .edu-card, .cert-card, .self-eval, .cert-card-img, .portfolio-card { background: #fff !important; }
-            .cert-gallery { grid-template-columns: repeat(3, 1fr) !important; }
-            .cert-gallery .cert-card-img img { max-height: 200px; }
+            /* 打印版：隐藏全部交互/装饰内容，只保留纯文字简历 */
+            body, html { background: #fff !important; background-image: none !important; color: #000 !important; }
+            body { padding: 0 !important; overflow-x: visible !important; }
+            .navbar, .back-top, .cert-modal, main, .footer { display: none !important; }
+            #printResume { display: block !important; }
         }
+
+        /* 打印专用简历：白底黑字、细分隔线分区 */
+        #printResume {
+            display: none;
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 28px 32px;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            color: #000;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        #printResume h1 { font-family: "Archivo Black", sans-serif; font-size: 26px; margin: 0 0 2px; }
+        #printResume .p-sub { color: #333; margin-bottom: 4px; }
+        #printResume .p-contact { color: #333; margin-bottom: 16px; font-size: 12px; }
+        #printResume .p-contact span { margin-right: 16px; }
+        #printResume .p-sec { margin-top: 18px; padding-top: 10px; border-top: 1px solid #000; }
+        #printResume .p-sec-title { font-family: "Archivo Black", sans-serif; font-size: 15px; letter-spacing: .5px; margin-bottom: 8px; }
+        #printResume .p-row { margin-bottom: 10px; }
+        #printResume .p-row .p-name { font-weight: 700; }
+        #printResume .p-row .p-meta { color: #555; font-size: 12px; }
+        #printResume .p-row ul { margin: 4px 0 0; padding-left: 18px; }
+        #printResume .p-row li { margin: 2px 0; }
+        #printResume .p-inline { margin: 4px 0; }
+        #printResume .p-exp { margin-bottom: 12px; }
+        #printResume .p-exp .p-role { font-weight: 700; }
+        #printResume .p-exp .p-period { color: #555; font-size: 12px; }
+        #printResume .p-skills { margin: 4px 0; }
+        #printResume strong { font-weight: 700; }
+        #printResume a { color: #000; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -576,6 +595,9 @@
             <span>·</span> 设计 · HTML / CSS / 原生 JS
         </footer>
     </main>
+
+    <!-- 打印专用：纯文字精简简历（点击打印时显示，平时隐藏） -->
+    <div id="printResume" aria-hidden="true"></div>
 
     <button class="back-top" id="backTop" aria-label="返回顶部"><i class="ri-arrow-up-line"></i></button>
 
@@ -943,6 +965,63 @@
                 if (c.cls) el.addEventListener('click', copyEmail);
                 cc.appendChild(el);
             });
+
+            // 打印专用：生成纯文字精简简历（平时隐藏，打印时显示）
+            (function buildPrintVersion() {
+                const pr = $('#printResume');
+                if (!pr) return;
+                const sk = resume.skills;
+                let skillText = '';
+                for (const g in sk) {
+                    const names = sk[g].map(s => s.name).join('、');
+                    skillText += `<div class="p-skills"><strong>${esc(g)}：</strong>${esc(names)}</div>`;
+                }
+                const expHtml = resume.experience.map(e => `
+                    <div class="p-exp">
+                        <div><span class="p-role">${esc(e.company)}</span> · ${esc(e.role)} <span class="p-period">（${esc(e.period)}）</span></div>
+                        <ul>${e.details.map(d => `<li>${d}</li>`).join('')}</ul>
+                    </div>`).join('');
+                const certHtml = resume.certificates.map(c => `
+                    <div class="p-row"><span class="p-name">${esc(c.name)}</span><span class="p-meta"> — ${esc(c.detail || '')} · ${esc(c.year || '')}</span></div>`).join('');
+                pr.innerHTML = `
+                    <h1>${esc(resume.name)}</h1>
+                    <div class="p-sub">南方医科大学 · 儿科学（本科）· 准大一新生</div>
+                    <div class="p-contact">
+                        <span>📱 ${esc(resume.phone)}</span>
+                        <span>✉️ ${esc(resume.email)}</span>
+                        <span>💬 微信 ${esc(resume.wechat)}</span>
+                        <span>📍 ${esc(resume.location)}</span>
+                    </div>
+
+                    <div class="p-sec">
+                        <div class="p-sec-title">教育背景</div>
+                        <div class="p-row">
+                            <span class="p-name">${esc(resume.education.school)}</span>
+                            <span class="p-meta">${esc(resume.education.major)} · ${esc(resume.education.period)} · ${esc(resume.education.gpa)} · ${esc(resume.education.gaokao)}</span>
+                        </div>
+                    </div>
+
+                    <div class="p-sec">
+                        <div class="p-sec-title">奖项与证书</div>
+                        ${certHtml}
+                    </div>
+
+                    <div class="p-sec">
+                        <div class="p-sec-title">能力特长</div>
+                        ${skillText}
+                        <div class="p-skills"><strong>核心特质：</strong>${esc(resume.badges.join('、'))}</div>
+                    </div>
+
+                    <div class="p-sec">
+                        <div class="p-sec-title">实践经历</div>
+                        ${expHtml}
+                    </div>
+
+                    <div class="p-sec">
+                        <div class="p-sec-title">自我评价</div>
+                        <div class="p-inline">${esc(resume.selfEval)}</div>
+                    </div>`;
+            })();
 
             // 模态框关闭
             const modal = $('#certModal');
