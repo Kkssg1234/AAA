@@ -1548,21 +1548,35 @@
             modal.addEventListener('click', () => modal.classList.remove('active'));
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.classList.remove('active'); });
 
-            // 导航高亮（ids 按页面 DOM 顺序排列，取最靠上的可见区块）
+            // 导航高亮：点击即时高亮被点项；滚动时按"当前处于导航栏下方的最近区块"判定
             const navLinks = $$('.navbar-links a');
             const ids = ['hero','stats','about','experience','projects','skills','portfolio','education','contact'];
-            if ('IntersectionObserver' in window) {
-                const obs = new IntersectionObserver(es => {
-                    let active = 'hero';
-                    const visible = es.filter(e => e.isIntersecting);
-                    if (visible.length) {
-                        visible.sort((a, b) => ids.indexOf(a.target.id) - ids.indexOf(b.target.id));
-                        active = visible[0].target.id;
-                    }
-                    navLinks.forEach(l => { const h = l.getAttribute('href').replace('#',''); l.setAttribute('aria-selected', h===active?'true':'false'); l.classList.toggle('active', h===active); });
-                }, { threshold: 0.3, rootMargin: '-64px 0px 0px 0px' });
-                ids.forEach(id => { const el = document.getElementById(id); if (el) obs.observe(el); });
-            }
+            const setNavActive = (id) => {
+                navLinks.forEach(l => {
+                    const h = (l.getAttribute('href') || '').replace('#', '');
+                    const on = h === id;
+                    l.setAttribute('aria-selected', on ? 'true' : 'false');
+                    l.classList.toggle('active', on);
+                });
+            };
+            // 点击/平滑滚动过渡期间锁定，避免 scroll-spy 覆盖用户所选，导致发光错位
+            let navLockUntil = 0;
+
+            const spyNav = () => {
+                if (Date.now() < navLockUntil) return;
+                const line = window.scrollY + 80; // 固定导航栏高度偏移
+                let current = ids[0];
+                for (const id of ids) {
+                    const el = document.getElementById(id);
+                    if (el && (el.getBoundingClientRect().top + window.scrollY) <= line) current = id;
+                }
+                setNavActive(current);
+            };
+            window.addEventListener('scroll', spyNav, { passive: true });
+            window.addEventListener('resize', spyNav);
+            spyNav();
+            // 滚动真正停止后（含 smooth 结束）再校准一次，覆盖锁定残留
+            window.addEventListener('scrollend', () => { navLockUntil = 0; spyNav(); });
 
             // 锚点平滑滚动（JS 接管，消除 file:// 下锚点导航的浏览器安全警告，并适配固定导航高度）
             $$('a[href^="#"]').forEach(a => {
@@ -1572,6 +1586,11 @@
                     const el = document.getElementById(id);
                     if (el) {
                         e.preventDefault();
+                        // 主导航项：立即把发光高亮到被点项，并锁定到滚动结束，保证视觉与目标一致
+                        if (a.closest('.navbar-links')) {
+                            setNavActive(id);
+                            navLockUntil = Date.now() + 1200;
+                        }
                         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         try { history.replaceState(null, '', '#' + id); } catch (_) {}
                     }
