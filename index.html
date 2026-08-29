@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#FFFDF0" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0e0e0e" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#0c0c0c">
     <meta name="description" content="匡子洋 · 南方医科大学儿科学准大一新生、阿里达摩院AI高级训练师认证 | 个人简历与作品集主页" />
     <meta name="format-detection" content="telephone=no, email=no, address=no" />
     <title>匡子洋 · 个人简历与作品集</title>
 
     <link href="assets/fonts/fonts.css" rel="stylesheet" />
     <link href="assets/remixicon/remixicon.css" rel="stylesheet" />
+    <link href="assets/accordion.css" rel="stylesheet" />
 
     <style>
         :root {
@@ -174,6 +174,11 @@
         .nav-cta-btn:hover { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 #000; }
         .nav-cta-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 0 #000; }
 
+        /* 移动端收纳菜单：桌面端 navbar-menu 为常规 flex（nav-toggle 隐藏） */
+        .navbar-menu { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .navbar-links { flex: 1; display: flex; align-items: center; justify-content: center; }
+        .nav-toggle { display: none; }
+
         /* ===== 容器 ===== */
         .container { max-width: var(--max-width); margin: 0 auto; padding: 40px 16px 48px; }
         .section { margin-top: 56px; }
@@ -325,46 +330,7 @@
         .cert-card .cert-detail { font-size: .9rem; color: var(--c-muted); }
         .cert-card .cert-year { font-size: .78rem; font-weight: 700; color: #000; background: var(--col-sky); border: 2px solid #000; display: inline-block; margin-top: 6px; padding: 1px 10px; }
 
-        /* ===== 证书图片画廊（横向滚动画廊） ===== */
-        .cert-gallery {
-            margin-top: 28px;
-            display: flex;
-            gap: 18px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding: 6px 4px 16px;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-        }
-        .cert-gallery::-webkit-scrollbar { height: 8px; }
-        .cert-gallery::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 0; }
-        .cert-gallery::-webkit-scrollbar-track { background: var(--c-surface); }
-        .cert-card-img {
-            flex: 0 0 auto;
-            width: clamp(220px, 70vw, 280px);
-            scroll-snap-align: start;
-            padding: 12px 12px 16px;
-            text-align: center;
-            overflow: hidden;
-        }
-        .cert-card-img .img-frame {
-            width: 100%;
-            aspect-ratio: 3 / 4;
-            overflow: hidden;
-            border: 2px solid var(--c-border);
-            background: var(--c-bg);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .cert-card-img img {
-            width: 100%; height: 100%; object-fit: contain;
-            background: var(--c-bg); display: block; cursor: zoom-in;
-            transition: transform .25s cubic-bezier(.22,.9,.35,1.1);
-        }
-        .cert-card-img:hover img { transform: scale(1.12); }
-        .cert-card-img .cert-title { font-weight: 700; font-size: .92rem; margin-top: 10px; color: var(--c-ink); }
-        .cert-card-img .cert-desc { font-size: .8rem; color: var(--c-muted); margin-top: 4px; }
-
+        /* 证书手风琴画廊（AccordionGallery）样式见 assets/accordion.css */
         /* ===== 证书图片模态框 ===== */
         .cert-modal { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; cursor: zoom-out; }
         .cert-modal.active { display: flex; animation: fadeUp .2s ease; }
@@ -400,6 +366,36 @@
 
         /* ===== 响应式 ===== */
         @media (max-width: 760px) {
+            /* 移动端：单一收纳菜单，点击汉堡按钮展开全部导航 */
+            .nav-toggle { display: inline-flex; }
+            .navbar-menu {
+                position: absolute; top: 100%; left: 0; right: 0;
+                flex-direction: column; align-items: stretch; gap: 0;
+                background: rgba(14,14,16,0.96);
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                padding: 0 16px;
+                max-height: 0; overflow: hidden; opacity: 0; visibility: hidden;
+                transform: translateY(-8px);
+                transition: max-height .35s ease, opacity .25s ease, transform .25s ease, visibility .25s, padding .25s ease;
+            }
+            .navbar.menu-open .navbar-menu {
+                max-height: 82vh; opacity: 1; visibility: visible; transform: none;
+                padding: 12px 16px 18px; overflow-y: auto;
+            }
+            .navbar-links {
+                flex-direction: column; align-items: stretch; justify-content: flex-start;
+                gap: 4px; width: 100%; overflow: visible;
+            }
+            .navbar-links .nav-link { width: 100%; text-align: left; border-radius: 12px; padding: 10px 12px; }
+            .navbar-actions {
+                flex-direction: column; align-items: stretch; width: 100%;
+                margin-top: 10px; padding-top: 10px; gap: 8px;
+                border-top: 1px solid rgba(255,255,255,0.08);
+            }
+            .navbar-actions .nav-cta-btn { width: 100%; justify-content: center; }
+            .navbar-actions .print-btn { width: 100%; justify-content: center; }
+
             .portfolio-card { padding: 14px; }
             .portfolio-thumb { min-height: 180px; aspect-ratio: 16/10; }
             .portfolio-card h3 { font-size: 0.98rem; }
@@ -421,7 +417,6 @@
             .about-card { grid-template-columns: 0.85fr 1.15fr; align-items: center; }
             .skills-grid { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
             .portfolio-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-            .cert-gallery { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
         }
         @media (min-width: 861px) {
             .hero { grid-template-columns: 1.05fr .95fr; gap: 40px; }
@@ -470,29 +465,243 @@
         #printResume strong { font-weight: 700; }
         #printResume a { color: #000; text-decoration: none; }
     </style>
+
+    <!-- ===================== Aura 暗色电影玻璃风覆盖层 ===================== -->
+    <style id="aura-glass-overrides">
+        :root {
+            --c-bg: #0c0c0c;
+            --c-dot: rgba(255,255,255,0.05);
+            --c-surface: rgba(255,255,255,0.055);
+            --c-border: rgba(255,255,255,0.15);
+            --c-shadow: rgba(0,0,0,0.5);
+            --c-ink: #ffffff;
+            --c-muted: rgba(255,255,255,0.68);
+            --col-mint: #A3E635;
+            --col-violet: #C084FC;
+            --col-sun: #FDE047;
+            --col-sky: #38BDF8;
+            --glass: rgba(255,255,255,0.07);
+            --glass-bd: rgba(255,255,255,0.17);
+            color-scheme: dark;
+        }
+        html { background: #0c0c0c; }
+
+        /* 背景视频舞台（固定全屏，置于内容之下） */
+        .bg-stage { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .bg-stage video { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; filter: contrast(1.06) saturate(1.08); }
+        .bg-stage::after {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(120% 80% at 50% -10%, rgba(56,189,248,0.10), transparent 62%),
+                radial-gradient(100% 60% at 85% 115%, rgba(192,132,252,0.10), transparent 62%),
+                linear-gradient(180deg, rgba(8,8,10,0.34) 0%, rgba(8,8,10,0.54) 52%, rgba(8,8,10,0.78) 100%);
+        }
+        body { background-color: transparent !important; background-image: none !important; color: var(--c-ink); }
+        main, .footer { position: relative; z-index: 2; }
+
+        /* ===== 玻璃卡（liquid-glass） ===== */
+        .brutal-card {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-bd) !important;
+            border-radius: 18px;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.08), 0 20px 48px rgba(0,0,0,0.5) !important;
+            position: relative; overflow: hidden;
+        }
+        .brutal-card:hover, .portfolio-card:hover {
+            transform: translateY(-4px) !important;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.1), 0 28px 64px rgba(0,0,0,0.6) !important;
+        }
+        .brutal-card::before {
+            content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.4px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.12) 22%, rgba(255,255,255,0) 42%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.12) 80%, rgba(255,255,255,0.45) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* ===== 导航 ===== */
+        .navbar {
+            background: rgba(12,12,12,0.55) !important;
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+        }
+        .navbar-brand { color: var(--c-ink); }
+        .navbar-brand small { color: var(--c-muted); }
+        .nav-link, .icon-btn, .nav-cta-btn {
+            background: var(--glass) !important; border: 1px solid var(--glass-bd) !important;
+            box-shadow: none !important; color: var(--c-ink);
+            border-radius: 999px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .nav-link:hover, .icon-btn:hover, .nav-cta-btn:hover { transform: translateY(-2px) !important; background: rgba(255,255,255,0.12) !important; }
+        .nav-link.active { background: rgba(56,189,248,0.2) !important; border-color: rgba(56,189,248,0.55) !important; }
+
+        /* ===== 标题 / 分隔线 ===== */
+        .section-header h2 { color: var(--c-ink); }
+        .section-header .line { background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.05)); height: 1px; flex: 1; }
+
+        /* ===== Hero ===== */
+        .hero h1 { color: var(--c-ink); text-shadow: 0 4px 40px rgba(56,189,248,0.25); }
+        .hero p.lead { color: var(--c-muted); }
+        .hero-avatar {
+            background: linear-gradient(135deg, rgba(253,224,71,0.16), rgba(56,189,248,0.12)) !important;
+            border: 1px solid var(--glass-bd) !important;
+            box-shadow: 0 0 70px rgba(56,189,248,0.22), inset 0 1px 1px rgba(255,255,255,0.18) !important;
+            color: #fff !important; border-radius: 26px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        }
+
+        /* 霓虹贴纸 / 徽章 / 标签：保留亮色，软化硬边与硬投影 */
+        .brutal-sticker, .float-sticker, .tagline, .brutal-badge, .period, .role-tag, .tag,
+        .level-tag, .gaokao, .cert-year, .cta-label {
+            border: none !important; box-shadow: 0 8px 22px rgba(0,0,0,0.45) !important;
+        }
+        .tagline, .cta-label { border-radius: 999px; }
+
+        /* ===== Tabs ===== */
+        .tabs-header { border-bottom: 1px solid var(--glass-bd) !important; }
+        .brutal-tab {
+            background: var(--glass) !important; border: 1px solid var(--glass-bd) !important;
+            box-shadow: none !important; color: var(--c-ink); border-radius: 999px;
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        }
+        .brutal-tab:hover { transform: translateY(-2px) !important; background: rgba(255,255,255,0.12) !important; }
+        .brutal-tab[aria-selected="true"] { background: rgba(56,189,248,0.2) !important; border-color: rgba(56,189,248,0.55) !important; }
+
+        /* ===== 技能条 ===== */
+        .skill-bar { background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 999px; overflow: hidden; }
+        .skill-item .name, .group-title, .exp-header .company, .project-header .name,
+        .edu-card .school, .cert-card .cert-name, .portfolio-card h3 { color: var(--c-ink); }
+        .skill-item .level, .skill-desc { color: var(--c-muted); }
+
+        /* ===== 作品集缩略 ===== */
+        .portfolio-thumb { border: 1px solid rgba(255,255,255,0.14) !important; border-radius: 14px; }
+
+        /* ===== 最终 CTA ===== */
+        .cta-block {
+            background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02)) !important;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-bd) !important;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.12), 0 36px 90px rgba(0,0,0,0.55) !important;
+            border-radius: 26px; color: #fff; position: relative; overflow: hidden;
+        }
+        .cta-block::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(600px circle at 50% 0%, rgba(255,255,255,0.16), transparent 70%);
+            opacity: 0.5;
+        }
+        .cta-block h2 { color: #fff; }
+        .cta-block p { color: var(--c-muted); }
+        .cta-contact {
+            background: rgba(255,255,255,0.08) !important; border: 1px solid var(--glass-bd) !important;
+            box-shadow: none !important; color: #fff; border-radius: 999px;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .cta-contact:hover { transform: translateY(-2px) !important; background: rgba(255,255,255,0.14) !important; }
+
+        /* ===== 页脚 / 返回顶部 / 模态 ===== */
+        .footer { border-top: 1px solid rgba(255,255,255,0.1) !important; color: var(--c-muted); }
+        .back-top {
+            background: rgba(12,12,12,0.6) !important; border: 1px solid var(--glass-bd) !important;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.55) !important; color: #fff;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 14px;
+        }
+        .back-top:hover { transform: translateY(-2px) !important; }
+        .cert-modal img { border: 1px solid rgba(255,255,255,0.4) !important; box-shadow: 0 24px 70px rgba(0,0,0,0.6) !important; }
+
+        /* ===== 按钮（hero CTA / 联系）统一玻璃药丸 ===== */
+        .brutal-btn {
+            background: rgba(255,255,255,0.08) !important; border: 1px solid var(--glass-bd) !important;
+            box-shadow: none !important; color: #fff; border-radius: 999px;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .brutal-btn:hover { transform: translateY(-2px) !important; background: rgba(255,255,255,0.15) !important; }
+        .brutal-btn:active { transform: translateY(0) scale(0.98) !important; }
+        .brutal-btn.solid-mint, .brutal-btn.solid-sun, .brutal-btn.solid-violet, .brutal-btn.solid-sky {
+            background: rgba(255,255,255,0.1) !important; color: #fff;
+        }
+        .nav-cta-btn { border-radius: 999px; }
+
+        /* ===== 全面精致化：留白 / 字体层级 / 玻璃质感 / 证书提亮 ===== */
+        /* 更舒展的留白节奏 */
+        main .container { padding: 48px 20px 56px; }
+        .section { margin-top: 72px; }
+        .brutal-card { padding: 24px; border-radius: 22px; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+        .about-card, .edu-card, .cert-card { padding: 26px; }
+
+        /* 字体层级与阅读质感 */
+        .hero h1 { font-size: clamp(2.4rem, 6.2vw, 4.2rem); letter-spacing: -0.04em; line-height: 1.05; }
+        .hero p.lead { font-size: 1.1rem; line-height: 1.65; max-width: 600px; }
+        .section-header h2 { font-size: clamp(1.35rem, 5vw, 2rem); letter-spacing: -0.02em; }
+        .skill-desc, .exp-header .meta, .project-header .meta, .edu-card .major, .cert-card .cert-detail { line-height: 1.6; }
+        .brutal-card p { line-height: 1.7; }
+
+        /* 更精致的玻璃高光 */
+        .brutal-card::before {
+            background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.18) 20%, rgba(255,255,255,0) 42%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.14) 82%, rgba(255,255,255,0.48) 100%);
+        }
+
+        /* 导航更精致 */
+        .navbar { background: rgba(10,10,12,0.62) !important; border-bottom-color: rgba(255,255,255,0.12) !important; }
+        .nav-link { font-weight: 600; letter-spacing: 0.01em; }
+
+        /* 按钮与标签 hover 发光 */
+        .brutal-btn:hover, .nav-link:hover, .nav-cta-btn:hover, .cta-contact:hover {
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.14), 0 0 24px rgba(56,189,248,0.18) !important;
+        }
+
+        /* 作品集卡片更通透 */
+        .portfolio-card { border-radius: 22px; }
+        .portfolio-thumb { border-radius: 16px; }
+
+        /* 证书区轻微提亮与边框光泽 */
+        .accordion-gallery { gap: 12px; margin-top: 32px; }
+        .ag-panel { border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.045) !important; }
+        .ag-panel--cert { background: rgba(245,245,250,0.07) !important; border-color: rgba(255,255,255,0.14); }
+        .ag-panel--active { border-color: rgba(56,189,248,0.45); box-shadow: 0 0 30px rgba(56,189,248,0.15); }
+        .ag-panel__text { text-shadow: 0 2px 10px rgba(0,0,0,0.55); }
+
+        /* 页脚 */
+        .footer { padding: 28px 0; font-size: 0.92rem; letter-spacing: 0.01em; }
+
+        /* 打印版：覆盖暗色覆盖层，恢复白底黑字纯文字简历，并隐藏背景视频层 */
+        @media print {
+            .bg-stage { display: none !important; }
+            html, body { background: #fff !important; background-image: none !important; color: #000 !important; }
+            body { background-color: #fff !important; }
+            .navbar, .back-top, .cert-modal, main, .footer, .bg-stage { display: none !important; }
+            #printResume { display: block !important; }
+        }
+    </style>
 </head>
 <body>
     <script>document.documentElement.classList.add('js');</script>
 
+    <!-- Aura 风格背景：全屏循环视频 + 暗化遮罩（离线时由 .bg-stage::after 暗色渐变兜底） -->
+    <div class="bg-stage" aria-hidden="true">
+        <video autoplay loop muted playsinline src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4"></video>
+    </div>
+
     <!-- ===== 导航 ===== -->
-    <nav class="navbar" role="navigation" aria-label="主导航">
+    <nav class="navbar" id="navbar" role="navigation" aria-label="主导航">
         <div class="navbar-inner">
             <div class="navbar-brand">匡子洋 <small>· 简历&amp;作品</small></div>
-            <div class="navbar-links" role="tablist" aria-label="页面导航">
-                <a href="#hero" class="nav-link" role="tab" aria-selected="true">首页</a>
-                <a href="#about" class="nav-link" role="tab">关于</a>
-                <a href="#stats" class="nav-link" role="tab">成果</a>
-                <a href="#experience" class="nav-link" role="tab">经历</a>
-                <a href="#projects" class="nav-link" role="tab">项目</a>
-                <a href="#skills" class="nav-link" role="tab">技能</a>
-                <a href="#portfolio" class="nav-link" role="tab">作品</a>
-                <a href="#education" class="nav-link" role="tab">教育</a>
-                <a href="#contact" class="nav-link" role="tab">联系</a>
-            </div>
-            <div class="navbar-actions">
-                <a href="#contact" class="nav-cta-btn" title="联系我"><i class="ri-mail-line"></i> 联系我</a>
-                <button class="icon-btn theme-toggle" aria-label="切换深浅色模式" title="切换深浅色模式"><i class="ri-moon-line"></i></button>
-                <button class="icon-btn print-btn" onclick="window.print()" aria-label="打印" title="打印"><i class="ri-printer-line"></i></button>
+            <button class="icon-btn nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navMenu"><i class="ri-menu-line"></i></button>
+            <div class="navbar-menu" id="navMenu">
+                <div class="navbar-links" role="tablist" aria-label="页面导航">
+                    <a href="#hero" class="nav-link" role="tab" aria-selected="true">首页</a>
+                    <a href="#about" class="nav-link" role="tab">关于</a>
+                    <a href="#stats" class="nav-link" role="tab">成果</a>
+                    <a href="#experience" class="nav-link" role="tab">经历</a>
+                    <a href="#projects" class="nav-link" role="tab">项目</a>
+                    <a href="#skills" class="nav-link" role="tab">技能</a>
+                    <a href="#portfolio" class="nav-link" role="tab">作品</a>
+                    <a href="#education" class="nav-link" role="tab">教育</a>
+                    <a href="#contact" class="nav-link" role="tab">联系</a>
+                </div>
+                <div class="navbar-actions">
+                    <a href="#contact" class="nav-cta-btn" title="联系我"><i class="ri-mail-line"></i> 联系我</a>
+                    <button class="icon-btn print-btn" onclick="window.print()" aria-label="打印" title="打印"><i class="ri-printer-line"></i></button>
+                </div>
             </div>
         </div>
     </nav>
@@ -646,6 +855,7 @@
         <img id="certModalImg" alt="证书大图" />
     </div>
 
+    <script src="assets/gsap/gsap.min.js"></script>
     <script>
         // ================================================================
         //  合并数据（landing 视觉风格 + 简历核心内容，文案/数据/链接完整保留）
@@ -705,7 +915,7 @@
             portfolio: [
                 { title: '个人简历网站', tag: '独立开发', desc: '完整响应式简历站：导航、深浅色模式、打印适配、证书画廊', thumb: 'var(--col-mint)', link: '#hero', cta: '预览本站' },
                 { title: '飞机大战', tag: '游戏开发', desc: '经典射击游戏，操控战机迎击敌机，含弹幕躲避、道具拾取与分数挑战', thumb: 'var(--col-violet)', img: '飞机大战.png', link: 'https://kkssg1234.github.io/airplane-battle/', cta: '开始游戏', external: true },
-                { title: '坦克大战', tag: '游戏开发', desc: 'Python 开发的经典坦克大战复刻：单人闯关、双人对战、车库系统与本地排行榜', thumb: 'var(--col-sky)', img: '坦克大战.png', link: 'https://kkssg1234.github.io/tank-battle/', cta: '开始游戏', external: true }
+                { title: '坦克大战', tag: '游戏开发', desc: 'Python 开发的经典坦克大战复刻：单人闯关、双人对战、车库系统与本地排行榜', thumb: 'var(--col-sky)', img: '坦克大战.png', link: 'https://tank-battle112625.netlify.app/', cta: '开始游戏', external: true }
             ],
             education: {
                 school: '南方医科大学',
@@ -718,13 +928,15 @@
                 { name: '全国中学生创新作文大赛', detail: '广东省初赛一等奖', year: '2025' },
                 { name: '全国中学生创新作文大赛', detail: '广东省决赛三等奖', year: '2025' },
                 { name: '阿里达摩院「人工智能训练师高级」', detail: '认证', year: '2026' },
-                { name: '阿里达摩院「人工智能训练师初级」', detail: '认证', year: '2026' }
+                { name: '阿里达摩院「人工智能训练师初级」', detail: '认证', year: '2026' },
+                { name: '阿里云 Apsara Clouder 专项技能认证', detail: '大模型 Clouder：基于百炼平台构建智能体应用', year: '2026' }
             ],
             certImages: [
                 { src: '高级.jpg', title: '阿里达摩院「人工智能训练师高级」', desc: '2026年获得' },
                 { src: '初级.jpg', title: '阿里达摩院「人工智能训练师初级」', desc: '2026年获得' },
                 { src: '初赛.jpg', title: '创新作文大赛 · 广东省初赛一等奖', desc: '2025年' },
-                { src: '广东省决赛.jpg', title: '创新作文大赛 · 广东省决赛三等奖', desc: '2025年' }
+                { src: '广东省决赛.jpg', title: '创新作文大赛 · 广东省决赛三等奖', desc: '2025年' },
+                { src: '阿里云Apsara Clouder专项技能认证.png', title: '阿里云 Apsara Clouder 专项技能认证', desc: '大模型 Clouder 认证 · 2026年' }
             ],
             selfEval: '作为医学方向准大一新生，兼具严谨的逻辑思维与人文关怀意识。在写作竞赛中锤炼出出色的内容输出能力，在AI高级认证中展现出对前沿技术的敏锐触觉，在校团委组织部工作中积累了组织协调与团队协作的实践经验。期待在大学阶段将医学专业与数据分析、人工智能等工具深度融合，为未来儿科临床或科研工作奠定复合型能力基础。性格踏实、自驱力强，善于从实践中快速迭代成长。'
         };
@@ -997,36 +1209,254 @@
             });
             eduCertGrid.appendChild(certWrap);
 
-            // 证书图片画廊 + 模态框
+            // 证书图片画廊 —— 手风琴式 AccordionGallery
+            // 忠实移植 React Bits 组件（GSAP 驱动），适配原生单文件站点。
             const galleryContainer = $('#certGalleryContainer');
             if (resume.certImages && resume.certImages.length > 0) {
-                const gallery = document.createElement('div');
-                gallery.className = 'cert-gallery';
-                resume.certImages.forEach(img => {
-                    const card = document.createElement('div');
-                    card.className = 'brutal-card cert-card-img';
-                    const base = img.src.replace(/\.(jpg|jpeg|png)$/i, '');
-                    card.innerHTML = `
-                        <div class="img-frame">
-                            <picture>
-                                <source srcset="${esc(base)}.webp 1x, ${esc(base)}.webp 2x" type="image/webp" sizes="(max-width: 480px) 70vw, 280px">
-                                <source srcset="${esc(img.src)} 1x, ${esc(img.src)} 2x" type="image/jpeg" sizes="(max-width: 480px) 70vw, 280px">
-                                <img src="${esc(img.src)}" alt="${esc(img.title)}" width="300" height="400" decoding="async" onerror="this.parentElement.parentElement.style.display='none'">
-                            </picture>
-                        </div>
-                        <div class="cert-title">${esc(img.title)}</div>
-                        <div class="cert-desc">${esc(img.desc)}</div>`;
-                    gallery.appendChild(card);
-                });
-                galleryContainer.appendChild(gallery);
-
-                const modal = $('#certModal');
-                const modalImg = $('#certModalImg');
-                gallery.querySelectorAll('img').forEach(img => {
-                    img.addEventListener('click', () => { modalImg.src = img.currentSrc || img.src; modal.classList.add('active'); });
+                const items = resume.certImages.map(c => ({
+                    image: c.src,
+                    label: c.title,
+                    alt: c.title
+                }));
+                buildAccordionGallery(galleryContainer, items, {
+                    defaultIndex: 1,
+                    accentColor: '#A3E635',
+                    overlayColor: '#0b1020',
+                    textColor: '#ffffff',
+                    height: 420,
+                    gap: 10,
+                    radius: 16,
+                    expandRatio: 0.52,
+                    orientation: 'horizontal',
+                    duration: 0.6,
+                    ease: 'power3.out',
+                    parallax: 0.5,
+                    tilt: 8,
+                    stagger: 0.06,
+                    trigger: 'hover',
+                    showLabels: true,
+                    grayscale: false,
+                    className: 'ag-panel--cert'
                 });
             }
 
+            // ----- AccordionGallery（vanilla + GSAP 移植）-----
+            function buildAccordionGallery(container, items, opts) {
+                const o = Object.assign({
+                    defaultIndex: 1, accentColor: '#A3E635', overlayColor: '#0b1020',
+                    textColor: '#ffffff', height: 420, gap: 10, radius: 16,
+                    expandRatio: 0.52, orientation: 'horizontal', duration: 0.6,
+                    ease: 'power3.out', parallax: 0.5, tilt: 8, stagger: 0.06,
+                    trigger: 'hover', showLabels: true, grayscale: false, className: ''
+                }, opts || {});
+
+                // 触屏 / 窄屏：hover 不可用，改由点击（tap）触发展开动画
+                const isTouch = !!(window.matchMedia && (window.matchMedia('(hover: none)').matches || window.matchMedia('(max-width: 760px)').matches));
+                if (isTouch) o.trigger = 'click';
+
+                const hasGSAP = (typeof window !== 'undefined') && !!window.gsap;
+                const vertical = o.orientation === 'vertical';
+                const count = items.length;
+                if (count === 0) return;
+                let active = Math.min(Math.max(o.defaultIndex, 0), count - 1);
+
+                const root = document.createElement('div');
+                root.className = 'accordion-gallery' + (vertical ? ' accordion-gallery--vertical' : '') + (o.className ? ' ' + o.className : '');
+                root.setAttribute('role', 'list');
+                root.setAttribute('aria-label', '证书手风琴画廊');
+                root.style.setProperty('--ag-accent', o.accentColor);
+                root.style.setProperty('--ag-overlay', o.overlayColor);
+                root.style.setProperty('--ag-text', o.textColor);
+                root.style.setProperty('--ag-gap', o.gap + 'px');
+                root.style.setProperty('--ag-radius', o.radius + 'px');
+                root.style.height = (vertical ? Math.round(o.height * 1.6) : o.height) + 'px';
+
+                const panelRefs = [], mediaRefs = [], barRefs = [], textRefs = [];
+                const mediaSizeRef = { v: 320 };
+                let tl = null;
+                let firstRun = true;
+                const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                items.forEach((item, i) => {
+                    const isActive = i === active;
+                    const Tag = item.link ? 'a' : 'div';
+                    const panel = document.createElement(Tag);
+                    panel.className = 'ag-panel' + (isActive ? ' ag-panel--active' : '');
+                    panel.style.borderRadius = o.radius + 'px';
+                    if (item.link) panel.href = item.link;
+                    panel.setAttribute('role', 'listitem');
+                    panel.tabIndex = 0;
+                    panel.setAttribute('aria-current', isActive ? 'true' : 'undefined');
+                    panel.setAttribute('aria-label', item.label || '');
+
+                    const frame = document.createElement('span'); frame.className = 'ag-panel__frame';
+                    const media = document.createElement('span'); media.className = 'ag-panel__media';
+                    const img = document.createElement('img');
+                    img.src = item.image; img.alt = item.alt || item.label || '';
+                    img.draggable = false;
+                    media.appendChild(img);
+                    const overlay = document.createElement('span'); overlay.className = 'ag-panel__overlay'; overlay.setAttribute('aria-hidden', 'true');
+                    frame.appendChild(media); frame.appendChild(overlay);
+                    panel.appendChild(frame);
+
+                    if (o.showLabels) {
+                        const label = document.createElement('span'); label.className = 'ag-panel__label'; label.setAttribute('aria-hidden', 'true');
+                        const bar = document.createElement('span'); bar.className = 'ag-panel__bar';
+                        const text = document.createElement('span'); text.className = 'ag-panel__text'; text.textContent = item.label || '';
+                        label.appendChild(bar); label.appendChild(text);
+                        panel.appendChild(label);
+                        barRefs[i] = bar; textRefs[i] = text;
+                    }
+                    panelRefs[i] = panel; mediaRefs[i] = media;
+                    root.appendChild(panel);
+                });
+
+                container.appendChild(root);
+
+                const modal = document.getElementById('certModal');
+                const modalImg = document.getElementById('certModalImg');
+
+                function applyLayout(animate) {
+                    const panels = panelRefs;
+                    if (!panels.length) return;
+                    const r = Math.min(Math.max(o.expandRatio, 0.2), 0.9);
+                    const grow = count > 1 ? (r * (count - 1)) / (1 - r) : 1;
+                    const mediaSize = mediaSizeRef.v;
+                    if (tl) tl.kill();
+                    const dur = (animate && !prefersReduced && hasGSAP) ? o.duration : 0;
+                    if (!hasGSAP) {
+                        panels.forEach((panel, i) => {
+                            const isActive = i === active;
+                            panel.style.flexGrow = isActive ? String(grow) : '1';
+                            if (barRefs[i]) barRefs[i].style.opacity = isActive ? '1' : '0';
+                            if (textRefs[i]) textRefs[i].style.opacity = isActive ? '1' : '0';
+                        });
+                        return;
+                    }
+                    try {
+                        tl = window.gsap.timeline();
+                        panels.forEach((panel, i) => {
+                            if (!panel) return;
+                            const isActive = i === active;
+                            const media = mediaRefs[i];
+                            const bar = barRefs[i];
+                            const text = textRefs[i];
+                            const rot = isActive ? 0 : (i < active ? o.tilt : -o.tilt);
+                            const rotProp = vertical ? { rotateX: -rot } : { rotateY: rot };
+                            tl.to(panel, Object.assign({ flexGrow: isActive ? grow : 1 }, rotProp, { duration: dur, ease: o.ease }), 0);
+                            if (media) {
+                                const drift = Math.max(-1.5, Math.min(1.5, active - i));
+                                const shift = drift * o.parallax * mediaSize * 0.06;
+                                const gray = (o.grayscale && !isActive) ? 1 : 0;
+                                tl.to(media, {
+                                    xPercent: -50, yPercent: -50,
+                                    x: vertical ? 0 : (isActive ? 0 : shift),
+                                    y: vertical ? (isActive ? 0 : shift) : 0,
+                                    '--ag-gray': gray,
+                                    '--ag-dim': isActive ? 0 : 0.18,
+                                    duration: dur, ease: o.ease
+                                }, 0);
+                            }
+                            if (o.showLabels && bar && text) {
+                                if (isActive) {
+                                    tl.to([bar, text], { opacity: 1, x: 0, duration: dur, ease: o.ease, stagger: prefersReduced ? 0 : o.stagger }, 0);
+                                } else {
+                                    tl.to([bar, text], { opacity: 0, x: -14, duration: dur * 0.6, ease: o.ease }, 0);
+                                }
+                            }
+                        });
+                    } catch (err) {
+                        // GSAP 异常（极少数环境）时降级为直接写样式，保证画廊始终可用
+                        if (window.console) console.warn('AccordionGallery GSAP 降级:', err);
+                        panels.forEach((panel, i) => {
+                            const isActive = i === active;
+                            panel.style.flexGrow = isActive ? String(grow) : '1';
+                            if (barRefs[i]) barRefs[i].style.opacity = isActive ? '1' : '0';
+                            if (textRefs[i]) textRefs[i].style.opacity = isActive ? '1' : '0';
+                        });
+                    }
+                }
+
+                function measure() {
+                    const rect = root.getBoundingClientRect();
+                    const total = vertical ? rect.height : rect.width;
+                    const usable = Math.max(total - o.gap * (count - 1), 120);
+                    const size = Math.max(140, usable * Math.min(Math.max(o.expandRatio, 0.2), 0.9) * 1.22);
+                    mediaSizeRef.v = size;
+                    root.style.setProperty('--ag-media-size', size + 'px');
+                    applyLayout(!firstRun);
+                }
+
+                measure();
+                if (window.ResizeObserver) {
+                    const ro = new ResizeObserver(measure);
+                    ro.observe(root);
+                } else {
+                    window.addEventListener('resize', measure);
+                }
+                firstRun = false;
+
+                function setActive(i) {
+                    i = Math.max(0, Math.min(count - 1, i));
+                    if (i === active) return;
+                    active = i;
+                    panelRefs.forEach((p, k) => {
+                        p.classList.toggle('ag-panel--active', k === active);
+                        p.setAttribute('aria-current', k === active ? 'true' : 'undefined');
+                    });
+                    applyLayout(true);
+                }
+
+                panelRefs.forEach((panel, i) => {
+                    if (o.trigger === 'hover') {
+                        panel.addEventListener('mouseenter', () => setActive(i));
+                    }
+                    panel.addEventListener('focus', () => setActive(i));
+                    panel.addEventListener('keydown', (e) => {
+                        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); setActive((i + 1) % count); }
+                        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); setActive((i - 1 + count) % count); }
+                    });
+                    panel.addEventListener('click', (e) => {
+                        const item = items[i];
+                        // 触屏模式：首次点击展开面板（触发动画），再次点击已展开面板才打开大图
+                        if (o.trigger !== 'hover' && i !== active) { setActive(i); return; }
+                        if (modal && modalImg && item && item.image) {
+                            e.preventDefault();
+                            modalImg.src = item.image;
+                            modal.classList.add('active');
+                        }
+                    });
+                });
+
+                // 移动端：进入视口时自动轮播一轮展开动画（仅一次），让动画可见；用户手动交互后停止
+                if (isTouch && hasGSAP && !prefersReduced) {
+                    let autoStopped = false;
+                    const playOnce = () => {
+                        if (autoStopped) return;
+                        const order = [];
+                        for (let k = 1; k <= count; k++) order.push((active + k) % count);
+                        let seq = 0;
+                        const step = () => {
+                            if (autoStopped) return;
+                            setActive(order[seq % count]);
+                            seq++;
+                            if (seq < order.length) setTimeout(step, 560);
+                        };
+                        setTimeout(step, 400);
+                    };
+                    if ('IntersectionObserver' in window) {
+                        const io = new IntersectionObserver((ents) => {
+                            ents.forEach(en => { if (en.isIntersecting) { playOnce(); io.disconnect(); } });
+                        }, { threshold: 0.35 });
+                        io.observe(root);
+                    } else {
+                        playOnce();
+                    }
+                    const stop = () => { autoStopped = true; };
+                    root.addEventListener('pointerdown', stop, { once: true });
+                    root.addEventListener('touchstart', stop, { once: true });
+                }
+            }
             // 自我评价
             const selfEval = $('#selfEval');
             if (resume.selfEval) {
@@ -1147,6 +1577,30 @@
                 });
             });
 
+            // 移动端收纳菜单：点击汉堡按钮展开/收起全部导航
+            const navToggle = $('#navToggle');
+            const navbarEl = $('#navbar');
+            const navMenu = $('#navMenu');
+            if (navToggle && navbarEl && navMenu) {
+                const setNavOpen = (open) => {
+                    navbarEl.classList.toggle('menu-open', open);
+                    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    const ic = navToggle.querySelector('i');
+                    if (ic) ic.className = open ? 'ri-close-line' : 'ri-menu-line';
+                };
+                navToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setNavOpen(!navbarEl.classList.contains('menu-open'));
+                });
+                $$('#navMenu a').forEach(a => a.addEventListener('click', () => setNavOpen(false)));
+                const pb = navMenu.querySelector('.print-btn');
+                if (pb) pb.addEventListener('click', () => setNavOpen(false));
+                document.addEventListener('click', (e) => {
+                    if (navbarEl.classList.contains('menu-open') && !navbarEl.contains(e.target)) setNavOpen(false);
+                });
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setNavOpen(false); });
+            }
+
             // 滚动进出场动画：板块进入视口时淡入上移，滚出视口时淡出（平滑进入与退出）
             const revEls = $$('.reveal');
             if ('IntersectionObserver' in window) {
@@ -1163,20 +1617,7 @@
             window.addEventListener('scroll', () => { bt.classList.toggle('visible', window.scrollY > 400); });
             bt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-            // 深浅色（file:// 下 localStorage 可能被禁，全部容错）
-            const tt = $('.theme-toggle'); const ti = tt.querySelector('i');
-            let stored = null;
-            try { stored = localStorage.getItem('theme'); } catch (_) {}
-            if (stored === 'dark' || (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.setAttribute('data-theme', 'dark'); ti.className = 'ri-sun-line';
-            }
-            tt.addEventListener('click', () => {
-                if (document.documentElement.getAttribute('data-theme') === 'dark') {
-                    document.documentElement.removeAttribute('data-theme'); ti.className = 'ri-moon-line'; try { localStorage.setItem('theme','light'); } catch (_) {}
-                } else {
-                    document.documentElement.setAttribute('data-theme','dark'); ti.className = 'ri-sun-line'; try { localStorage.setItem('theme','dark'); } catch (_) {}
-                }
-            });
+            // 暗色为唯一主题（Aura 风格），深浅色切换已移除
 
             // 暴露给全局（兼容任何旧内联 onclick 引用）
             window.copyEmail = copyEmail;
