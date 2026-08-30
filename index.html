@@ -2388,13 +2388,16 @@
             if (!hasGsap) { root.classList.add('is-open'); return; }
             if (busy) return;
             busy = true;
+            // 安全网：即便 gsap 时间线因任何原因未生效，CSS 也能保证面板可见（不改配色）
+            root.classList.add('is-open');
             const tl = buildOpenTimeline();
             if (tl) { tl.eventCallback('onComplete', function () { busy = false; }); tl.play(0); }
-            else busy = false;
+            else { busy = false; root.classList.remove('is-open'); }
         }
 
         function playClose() {
-            if (!hasGsap) { root.classList.remove('is-open'); return; }
+            root.classList.remove('is-open');
+            if (!hasGsap) { return; }
             if (openTl) { openTl.kill(); openTl = null; }
             if (closeTween) closeTween.kill();
             closeTween = gsap.to(layerEls.concat([panel]), {
