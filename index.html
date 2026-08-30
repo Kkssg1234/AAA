@@ -131,14 +131,14 @@
             text-align: center;
             padding: var(--s5) var(--s3);
         }
-        .cover__inner { max-width: 1440px; }
+        .cover__inner { max-width: 1680px; }
         /* 封面箴言：由 StrokeText（React Bits 移植）逐字描边绘入，
            先以青蓝描出轮廓、再以近白填充。视觉由内部 SVG 提供，故此处的「字号」由
            容器宽度经 clamp() 响应式控制：桌面大、移动端不溢出也不折行（SVG 单行缩放）。 */
         .cover__motto {
             margin: 0 auto;
-            /* 首屏动画整体放大：桌面端上限 1440px + 96vw，字号与冲击力更强；移动端由 ≤760px 媒体查询收敛到装订线内 */
-            max-width: clamp(360px, 96vw, 1440px);
+            /* 首屏动画再次放大：桌面端上限 1680px + 98vw，字号与冲击力更强；移动端由 ≤760px 媒体查询收敛到装订线内 */
+            max-width: clamp(420px, 98vw, 1680px);
         }
         /* StrokeText 基础样式（移植自 React Bits） */
         .stroke-text {
@@ -196,8 +196,8 @@
             height: var(--nav-h);
             display: flex;
             align-items: center;
-            /* 导航栏填充偏暗藏青 #10243A（玻璃质感保留，alpha 提高使白字更稳） */
-            background: rgba(16, 36, 58, .88);
+            /* 玻璃层更通透：不透明度 .72 → .60，并提亮、加强饱和 */
+            background: rgba(16, 21, 30, .60);
             backdrop-filter: blur(16px) saturate(1.35) brightness(1.06);
             -webkit-backdrop-filter: blur(16px) saturate(1.35) brightness(1.06);
             border-bottom: 1px solid transparent;
@@ -211,7 +211,7 @@
             opacity: 1;
             transform: none;
             pointer-events: auto;
-            border-bottom-color: rgba(22, 48, 77, .7);
+            border-bottom-color: var(--line);
         }
         .navbar-inner {
             max-width: var(--max-width);
@@ -239,30 +239,32 @@
             margin-left: var(--s1);
         }
         .navbar-menu { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
-        /* 已是 ul 结构（GooeyNav 需要 li 作为胶囊定位目标），补上列表重置 */
-        .navbar-links { display: flex; align-items: center; gap: 2px; list-style: none; margin: 0; padding: 0; }
+        .navbar-links { display: flex; align-items: center; gap: 2px; }
         .nav-link {
             padding: 7px 13px;
             border-radius: var(--r-pill);
             font-size: .82rem;
             font-weight: 500;
-            color: #E3ECF5;
+            color: var(--ink-soft);
             text-decoration: none;
             white-space: nowrap;
             border: 1px solid transparent;
             transition: color .2s ease, background .2s ease, border-color .2s ease;
         }
-        .nav-link:hover { color: #FFFFFF; background: rgba(22, 48, 77, .55); }
-        /* 桌面端活动项改由 GooeyNav 的胶囊指示，这里不再叠加背景高亮，避免双重指示 */
-        .nav-link.active { color: #FFFFFF; }
-        .gooey-nav-container .gooey-nav ul li.active .nav-link { color: var(--gn-pill-ink); }
+        .nav-link:hover { color: var(--ink); background: var(--surface-hi); }
+        .nav-link.active {
+            color: var(--accent);
+            background: var(--accent-soft);
+            border-color: var(--accent-line);
+            box-shadow: 0 0 18px rgba(56, 189, 248, .26);
+        }
         .navbar-actions { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0; }
         .btn-pill {
             padding: 8px 18px;
             border-radius: var(--r-pill);
-            border: 1px solid rgba(125, 211, 252, .35);
-            background: rgba(22, 48, 77, .5);
-            color: #EAF2FB;
+            border: 1px solid var(--line-hi);
+            background: var(--surface);
+            color: var(--ink);
             font-family: var(--font-sans);
             font-size: .8rem;
             font-weight: 600;
@@ -270,7 +272,7 @@
             white-space: nowrap;
             transition: background .2s ease, border-color .2s ease, color .2s ease;
         }
-        .btn-pill:hover { background: rgba(22, 48, 77, .85); border-color: var(--accent-line); color: var(--accent); }
+        .btn-pill:hover { background: var(--surface-hi); border-color: var(--accent-line); color: var(--accent); }
         .nav-toggle { display: none; }
 
         /* ===================== 容器与区块 ===================== */
@@ -618,163 +620,6 @@
             .sm-panel-itemNum, .sm-socials-title, .sm-socials-link { transition: none !important; }
         }
 
-        /* ===================== GooeyNav（React Bits 移植，桌面端导航） =====================
-           胶囊与粒子统一走站点强调色的青蓝色阶，维持「全站单一强调色」。
-           原理：filter 的 blur + contrast(100) 制造 metaball 融合，黑色 ::before 提供对比场，
-           mix-blend-mode: lighten 让黑色底在深色页面上也自然消失，只留下胶囊与粒子。 */
-        .gooey-nav-container {
-            position: relative;
-            /* 导航胶囊填充改为暗藏青蓝（#1E3A5C），与站点藏青导航栏同族；
-               粒子保留青蓝色阶作点缀，点击后的胶囊更沉稳、与整体暗色风格一致。胶囊文字仍为浅色保证对比度。 */
-            --color-1: #0891B2;
-            --color-2: #0E7490;
-            --color-3: #06B6D4;
-            --color-4: #22D3EE;
-            --gn-pill: #1E3A5C;
-            --gn-pill-ink: #EAFBFF;
-        }
-        .gooey-nav-container .gooey-nav {
-            display: flex;
-            position: relative;
-            transform: translate3d(0, 0, 0.01px);
-        }
-        .gooey-nav-container .gooey-nav ul {
-            display: flex;
-            gap: 2px;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            position: relative;
-            z-index: 3;
-            color: var(--ink-soft);
-        }
-        .gooey-nav-container .gooey-nav ul li {
-            border-radius: 100vw;
-            position: relative;
-            cursor: pointer;
-            transition: color .3s ease;
-        }
-        .gooey-nav-container .gooey-nav ul li:focus-within:has(:focus-visible) {
-            box-shadow: 0 0 0 2px var(--accent);
-        }
-        /* 活动项真实文字会被胶囊盖住，由 .effect.text 用深色重绘一层 */
-
-        .gooey-nav-container .effect {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 0;
-            height: 0;
-            opacity: 1;
-            pointer-events: none;
-            display: grid;
-            place-items: center;
-            z-index: 1;
-        }
-        /* 首次定位完成后才启用位移过渡，避免页面加载时从 (0,0) 滑入 */
-        .gooey-nav-container.gn-ready .effect {
-            transition: left .45s cubic-bezier(.22, .9, .35, 1), top .3s ease,
-                        width .45s cubic-bezier(.22, .9, .35, 1), height .3s ease;
-        }
-        .gooey-nav-container .effect.text {
-            color: var(--gn-pill-ink);
-            font-size: .82rem;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-        .gooey-nav-container .effect.filter {
-            filter: blur(7px) contrast(100) blur(0);
-            mix-blend-mode: lighten;
-        }
-        .gooey-nav-container .effect.filter::before {
-            content: '';
-            position: absolute;
-            inset: -75px;
-            z-index: -2;
-            background: black;
-        }
-        .gooey-nav-container .effect.filter::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--gn-pill);
-            transform: scale(0);
-            opacity: 0;
-            z-index: -1;
-            border-radius: 100vw;
-        }
-        .gooey-nav-container .effect.active::after { animation: pill .3s ease both; }
-
-        @keyframes pill {
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .particle,
-        .point {
-            display: block;
-            opacity: 0;
-            width: 20px;
-            height: 20px;
-            border-radius: 100%;
-            transform-origin: center;
-        }
-        .particle {
-            --time: 5s;
-            position: absolute;
-            top: calc(50% - 8px);
-            left: calc(50% - 8px);
-            animation: particle calc(var(--time)) ease 1 -350ms;
-        }
-        .point {
-            background: var(--color);
-            opacity: 1;
-            animation: point calc(var(--time)) ease 1 -350ms;
-        }
-
-        @keyframes particle {
-            0% {
-                transform: rotate(0deg) translate(calc(var(--start-x)), calc(var(--start-y)));
-                opacity: 1;
-                animation-timing-function: cubic-bezier(.55, 0, 1, .45);
-            }
-            70% {
-                transform: rotate(calc(var(--rotate) * .5)) translate(calc(var(--end-x) * 1.2), calc(var(--end-y) * 1.2));
-                opacity: 1;
-                animation-timing-function: ease;
-            }
-            85% {
-                transform: rotate(calc(var(--rotate) * .66)) translate(calc(var(--end-x)), calc(var(--end-y)));
-                opacity: 1;
-            }
-            100% {
-                transform: rotate(calc(var(--rotate) * 1.2)) translate(calc(var(--end-x) * .5), calc(var(--end-y) * .5));
-                opacity: 1;
-            }
-        }
-
-        @keyframes point {
-            0% {
-                transform: scale(0);
-                opacity: 0;
-                animation-timing-function: cubic-bezier(.55, 0, 1, .45);
-            }
-            25% { transform: scale(calc(var(--scale) * .25)); }
-            38% { opacity: 1; }
-            65% {
-                transform: scale(var(--scale));
-                opacity: 1;
-                animation-timing-function: ease;
-            }
-            85% {
-                transform: scale(var(--scale));
-                opacity: 1;
-            }
-            100% {
-                transform: scale(0);
-                opacity: 0;
-            }
-        }
-
         /* ===================== StaggeredMenu（React Bits 移植，仅移动端 ≤760px 启用） =====================
            配色：面板为站点深底玻璃，错位层用墨青两级（#0F2A38 → #164E63），
            强调色 #38BDF8 只用于序号、悬停与开启态按钮，维持全站单一强调色 */
@@ -966,23 +811,14 @@
             <a class="navbar-brand" href="#cover">匡子洋 <small>简历与作品</small></a>
             <button class="nav-toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navMenu"><i class="ri-menu-line"></i></button>
             <div class="navbar-menu" id="navMenu">
-                <!-- 桌面端 GooeyNav：内层用 div 而非 nav，避免 nav 嵌套 nav。
-                     .navbar-links 仍为 ul、链接仍为 a，移动端 StaggeredMenu 依赖的
-                     `.navbar-links a` 选择器保持不变 -->
-                <div class="gooey-nav-container" id="gooeyNav">
-                    <div class="gooey-nav">
-                        <ul class="navbar-links" aria-label="页面导航">
-                            <li><a href="#about" class="nav-link">关于</a></li>
-                            <li><a href="#stats" class="nav-link">成果</a></li>
-                            <li><a href="#experience" class="nav-link">经历</a></li>
-                            <li><a href="#education" class="nav-link">教育</a></li>
-                            <li><a href="#skills" class="nav-link">能力</a></li>
-                            <li><a href="#portfolio" class="nav-link">作品</a></li>
-                            <li><a href="#contact" class="nav-link">联系</a></li>
-                        </ul>
-                    </div>
-                    <span class="effect filter" aria-hidden="true"></span>
-                    <span class="effect text" aria-hidden="true"></span>
+                <div class="navbar-links" aria-label="页面导航">
+                    <a href="#about" class="nav-link">关于</a>
+                    <a href="#stats" class="nav-link">成果</a>
+                    <a href="#experience" class="nav-link">经历</a>
+                    <a href="#education" class="nav-link">教育</a>
+                    <a href="#skills" class="nav-link">能力</a>
+                    <a href="#portfolio" class="nav-link">作品</a>
+                    <a href="#contact" class="nav-link">联系</a>
                 </div>
                 <div class="navbar-actions">
                     <button class="btn-pill" id="printBtn" type="button">打印简历</button>
@@ -1001,7 +837,7 @@
                     data-fill="#F4F7FA"
                     data-fontsize="120"
                     data-weight="500"
-                    data-spacing="14"
+                    data-spacing="18"
                     data-strokewidth="2.4"
                     data-draw="2.2"
                     data-filldelay="0.25"
@@ -1732,12 +1568,6 @@
                     else l.removeAttribute('aria-current');
                     l.classList.toggle('active', on);
                 });
-                // 同步桌面端 GooeyNav 的胶囊位置。
-                // 传 false：滚动跟随只平滑移动胶囊，不放粒子，避免滚过每个板块都「放烟花」；
-                // 点击时由 GooeyNav 自己的 click 处理器以 true 触发粒子。
-                if (window.__gooeyNav && typeof window.__gooeyNav.setActiveByHref === 'function') {
-                    window.__gooeyNav.setActiveByHref(id, false);
-                }
             };
             // 点击/平滑滚动过渡期间锁定，避免 scroll-spy 覆盖用户所选，导致发光错位
             let navLockUntil = 0;
@@ -2013,192 +1843,6 @@
       } else {
         run();
       }
-    })();
-    </script>
-
-    <!-- ===== 桌面端 GooeyNav（React Bits 移植为原生 JS，无依赖） ===== -->
-    <script>
-    (function () {
-        'use strict';
-
-        const container = document.getElementById('gooeyNav');
-        if (!container) return;
-        const listEl = container.querySelector('.navbar-links');
-        const filterEl = container.querySelector('.effect.filter');
-        const textEl = container.querySelector('.effect.text');
-        if (!listEl || !filterEl || !textEl) return;
-
-        const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-
-        const CONFIG = {
-            animationTime: 600,
-            particleCount: 15,
-            particleDistances: [90, 10],
-            particleR: 100,
-            timeVariance: 300,
-            colors: [1, 2, 3, 1, 2, 3, 1, 4],
-            initialActiveIndex: 0
-        };
-
-        const liEls = Array.prototype.slice.call(listEl.querySelectorAll('li'));
-        if (!liEls.length) return;
-        let activeIndex = CONFIG.initialActiveIndex;
-
-        const noise = function (n) { n = n === undefined ? 1 : n; return n / 2 - Math.random() * n; };
-
-        const getXY = function (distance, pointIndex, totalPoints) {
-            const angle = ((360 + noise(8)) / totalPoints) * pointIndex * (Math.PI / 180);
-            return [distance * Math.cos(angle), distance * Math.sin(angle)];
-        };
-
-        const createParticle = function (i, t, d, r) {
-            const rotate = noise(r / 10);
-            return {
-                start: getXY(d[0], CONFIG.particleCount - i, CONFIG.particleCount),
-                end: getXY(d[1] + noise(7), CONFIG.particleCount - i, CONFIG.particleCount),
-                time: t,
-                scale: 1 + noise(0.2),
-                color: CONFIG.colors[Math.floor(Math.random() * CONFIG.colors.length)],
-                rotate: rotate > 0 ? (rotate + r / 20) * 10 : (rotate - r / 20) * 10
-            };
-        };
-
-        const makeParticles = function (element) {
-            if (reduced) return; // 尊重系统「减少动效」偏好
-            const d = CONFIG.particleDistances;
-            const r = CONFIG.particleR;
-            const bubbleTime = CONFIG.animationTime * 2 + CONFIG.timeVariance;
-            element.style.setProperty('--time', bubbleTime + 'ms');
-
-            for (let i = 0; i < CONFIG.particleCount; i++) {
-                const t = CONFIG.animationTime * 2 + noise(CONFIG.timeVariance * 2);
-                const p = createParticle(i, t, d, r);
-                element.classList.remove('active');
-
-                setTimeout(function () {
-                    const particle = document.createElement('span');
-                    const point = document.createElement('span');
-                    particle.className = 'particle';
-                    particle.style.setProperty('--start-x', p.start[0] + 'px');
-                    particle.style.setProperty('--start-y', p.start[1] + 'px');
-                    particle.style.setProperty('--end-x', p.end[0] + 'px');
-                    particle.style.setProperty('--end-y', p.end[1] + 'px');
-                    particle.style.setProperty('--time', p.time + 'ms');
-                    particle.style.setProperty('--scale', String(p.scale));
-                    particle.style.setProperty('--color', 'var(--color-' + p.color + ', white)');
-                    particle.style.setProperty('--rotate', p.rotate + 'deg');
-
-                    point.className = 'point';
-                    particle.appendChild(point);
-                    element.appendChild(particle);
-
-                    requestAnimationFrame(function () { element.classList.add('active'); });
-
-                    setTimeout(function () {
-                        try { element.removeChild(particle); } catch (e) { /* 已移除则忽略 */ }
-                    }, t);
-                }, 30);
-            }
-        };
-
-        const updateEffectPosition = function (element) {
-            const containerRect = container.getBoundingClientRect();
-            const pos = element.getBoundingClientRect();
-            if (!pos.width) return; // 容器不可见（如移动端）时不做定位
-            const styles = {
-                left: (pos.x - containerRect.x) + 'px',
-                top: (pos.y - containerRect.y) + 'px',
-                width: pos.width + 'px',
-                height: pos.height + 'px'
-            };
-            Object.assign(filterEl.style, styles);
-            Object.assign(textEl.style, styles);
-            textEl.innerText = element.innerText;
-        };
-
-        const clearParticles = function () {
-            const particles = filterEl.querySelectorAll('.particle');
-            Array.prototype.forEach.call(particles, function (p) {
-                try { filterEl.removeChild(p); } catch (e) { /* 已移除则忽略 */ }
-            });
-        };
-
-        /**
-         * 切换活动项。
-         * withParticles = true  → 点击触发，放出气泡粒子（组件的招牌效果）
-         * withParticles = false → 滚动跟随，只平滑移动胶囊，避免滚动时连续「放烟花」
-         */
-        const setActive = function (index, withParticles) {
-            if (index < 0 || index >= liEls.length) return;
-            if (index === activeIndex) return;
-            activeIndex = index;
-
-            liEls.forEach(function (li, i) { li.classList.toggle('active', i === index); });
-            updateEffectPosition(liEls[index]);
-
-            clearParticles();
-            textEl.classList.remove('active');
-            void textEl.offsetWidth; // 强制回流以重启动画
-            textEl.classList.add('active');
-
-            if (withParticles) makeParticles(filterEl);
-        };
-
-        const activate = function (index, withParticles) {
-            setActive(index, withParticles);
-        };
-
-        liEls.forEach(function (li, index) {
-            const a = li.querySelector('a');
-            if (!a) return;
-            a.addEventListener('click', function (e) {
-                // 不阻止默认：锚点平滑滚动交给主脚本的通用处理器
-                activate(index, true);
-            });
-            a.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault(); // 接管原生跳转，走统一入口
-                    activate(index, true);
-                    if (a.getAttribute('href')) {
-                        const id = a.getAttribute('href').slice(1);
-                        const target = id ? document.getElementById(id) : null;
-                        if (target) target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-                    }
-                }
-            });
-        });
-
-        // 初始定位（不加过渡），随后启用胶囊位移动画
-        liEls[activeIndex].classList.add('active');
-        updateEffectPosition(liEls[activeIndex]);
-        textEl.classList.add('active');
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () { container.classList.add('gn-ready'); });
-        });
-
-        // 尺寸变化时重新对齐胶囊
-        if (typeof ResizeObserver !== 'undefined') {
-            const ro = new ResizeObserver(function () {
-                updateEffectPosition(liEls[activeIndex]);
-            });
-            ro.observe(container);
-        } else {
-            window.addEventListener('resize', function () { updateEffectPosition(liEls[activeIndex]); });
-        }
-
-        // 供滚动监听（scroll-spy）同步胶囊位置：滚动驱动不放粒子
-        window.__gooeyNav = {
-            setActiveByHref: function (id, withParticles) {
-                for (let i = 0; i < liEls.length; i++) {
-                    const a = liEls[i].querySelector('a');
-                    if (a && a.getAttribute('href') === '#' + id) {
-                        setActive(i, withParticles === true);
-                        return true;
-                    }
-                }
-                return false;
-            }
-        };
     })();
     </script>
 
