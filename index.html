@@ -576,41 +576,15 @@
         }
 
         @media (max-width: 760px) {
-            /* 移动端收纳菜单 */
-            .nav-toggle {
-                display: grid;
-                place-items: center;
-                width: 40px;
-                height: 40px;
-                border-radius: var(--r-pill);
-                border: 1px solid var(--line-hi);
-                background: var(--surface);
-                color: var(--ink);
-                cursor: pointer;
-                font-size: 1.15rem;
-            }
-            .navbar-menu {
-                position: fixed;
-                top: var(--nav-h);
-                left: 0;
-                right: 0;
-                flex-direction: column;
-                align-items: stretch;
-                gap: var(--s2);
-                padding: var(--s3);
-                background: rgba(10, 12, 16, .97);
-                backdrop-filter: blur(16px);
-                border-bottom: 1px solid var(--line);
-                transform: translateY(-8px);
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity .25s ease, transform .25s ease;
-            }
-            .navbar.menu-open .navbar-menu { opacity: 1; transform: none; pointer-events: auto; }
-            .navbar-links { flex-direction: column; align-items: stretch; gap: 2px; }
-            .nav-link { padding: 11px 14px; border-radius: 10px; }
-            .navbar-actions { flex-direction: column; align-items: stretch; }
-            .navbar-actions .btn-pill { width: 100%; }
+            /* 移动端导航改由 StaggeredMenu 接管，隐藏旧的下拉收纳菜单与汉堡按钮 */
+            .nav-toggle { display: none !important; }
+            .navbar-menu { display: none !important; }
+
+            /* 页边距由 24px 加宽到 28px：导航、容器、封面共用同一条装订线 */
+            .container { padding: 0 28px; }
+            .navbar-inner { padding: 0 28px; }
+            .cover { padding: var(--s5) 28px; }
+
             .skill { grid-template-columns: minmax(0, 1fr) 92px; }
             .skill__meter { grid-column: 1 / -1; }
         }
@@ -621,6 +595,12 @@
             .tl-item { padding-left: var(--s4); }
             .cover__motto { letter-spacing: .1em; text-indent: .1em; }
             .cert-row { grid-template-columns: minmax(0, 1fr); }
+            /* 小屏加大纵向呼吸：区块上下留白 64px → 76px */
+            .section { padding: 76px 0; }
+            .sec-head { margin-bottom: var(--s4); }
+            /* 成果数据之间补上分隔，避免单列堆叠时糊成一片 */
+            .stat { padding-top: var(--s3); }
+            .stat + .stat { border-top: 1px solid var(--line); }
         }
 
         /* 尊重系统减少动效偏好：关闭所有位移与绘制动画 */
@@ -632,7 +612,95 @@
             .work:hover { transform: none; }
             /* 封面艺术字的流光动画同样关闭 */
             .cover__motto { animation: none !important; }
+            /* 移动端菜单同样不做位移动画，直接显隐 */
+            .sm-panel, .sm-prelayer, .sm-panel-itemLabel,
+            .sm-panel-itemNum, .sm-socials-title, .sm-socials-link { transition: none !important; }
         }
+
+        /* ===================== StaggeredMenu（React Bits 移植，仅移动端 ≤760px 启用） =====================
+           配色：面板为站点深底玻璃，错位层用墨青两级（#0F2A38 → #164E63），
+           强调色 #38BDF8 只用于序号、悬停与开启态按钮，维持全站单一强调色 */
+        .sm-root { display: none; }
+        @media (max-width: 760px) {
+            .sm-root { display: block; position: fixed; inset: 0; z-index: 1001; pointer-events: none; }
+        }
+
+        .sm-prelayers { position: absolute; top: 0; right: 0; bottom: 0; width: min(86vw, 420px); pointer-events: none; z-index: 5; }
+        .sm-prelayer { position: absolute; top: 0; right: 0; height: 100%; width: 100%; transform: translateX(0); }
+
+        .sm-toggle-bar {
+            position: absolute; top: 0; right: 0; height: var(--nav-h);
+            display: flex; align-items: center; padding: 0 28px;
+            pointer-events: none; z-index: 30;
+        }
+        .sm-toggle-bar > * { pointer-events: auto; }
+        .sm-toggle {
+            position: relative; display: inline-flex; align-items: center; gap: .5rem;
+            background: transparent; border: none; cursor: pointer;
+            color: #EDF1F6; font-family: var(--font-sans); font-size: .9rem; font-weight: 600; line-height: 1;
+            text-shadow: 0 1px 10px rgba(6, 9, 14, .6);
+        }
+        .sm-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+        .sm-toggle-textWrap { position: relative; display: inline-block; height: 1em; overflow: hidden; white-space: nowrap; }
+        .sm-toggle-textInner { display: flex; flex-direction: column; line-height: 1; }
+        .sm-toggle-line { display: block; height: 1em; line-height: 1; }
+        .sm-icon { position: relative; width: 14px; height: 14px; flex: 0 0 14px; display: inline-flex; align-items: center; justify-content: center; will-change: transform; }
+        .sm-icon-line {
+            position: absolute; left: 50%; top: 50%; width: 100%; height: 2px;
+            background: currentColor; border-radius: 2px; transform: translate(-50%, -50%); will-change: transform;
+        }
+
+        .sm-panel {
+            position: absolute; top: 0; right: 0; width: min(86vw, 420px); height: 100%;
+            background: rgba(16, 21, 30, .94);
+            backdrop-filter: blur(20px) saturate(1.3);
+            -webkit-backdrop-filter: blur(20px) saturate(1.3);
+            border-left: 1px solid var(--line);
+            display: flex; flex-direction: column;
+            padding: calc(var(--nav-h) + 28px) 28px 28px;
+            overflow-y: auto; z-index: 10; pointer-events: auto;
+        }
+        .sm-panel-inner { flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
+        .sm-panel-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
+        .sm-panel-itemWrap { position: relative; overflow: hidden; line-height: 1; }
+        .sm-panel-item {
+            position: relative; color: var(--ink); font-weight: 600;
+            font-size: clamp(1.9rem, 10vw, 2.8rem);
+            cursor: pointer; line-height: 1.2; letter-spacing: -.01em;
+            text-decoration: none; display: inline-flex; align-items: baseline; gap: .55rem;
+            transition: color .25s ease;
+        }
+        .sm-panel-item:hover, .sm-panel-item:focus-visible { color: var(--accent); }
+        .sm-panel-itemLabel { display: inline-block; will-change: transform; transform-origin: 50% 100%; }
+        .sm-panel-itemNum { font-size: .78rem; font-weight: 500; color: var(--accent); font-variant-numeric: tabular-nums; opacity: 0; }
+        .sm-socials { margin-top: auto; padding-top: 2rem; display: flex; flex-direction: column; gap: .9rem; }
+        .sm-socials-title { margin: 0; font-size: .72rem; letter-spacing: .24em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+        .sm-socials-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .65rem; }
+        .sm-socials-link {
+            font-family: var(--font-sans); font-size: .95rem; font-weight: 500;
+            color: var(--ink-soft); text-decoration: none;
+            background: none; border: none; padding: 0; cursor: pointer; text-align: left;
+            transition: color .25s ease;
+        }
+        .sm-socials-link:hover, .sm-socials-link:focus-visible { color: var(--accent); }
+        .sm-panel-print { margin-top: 1.4rem; align-self: flex-start; }
+
+        /* 降级：默认停在屏外，靠 .is-open 切换（gsap 不可用或需回退时使用） */
+        .sm-prelayer { transform: translateX(100%); transition: transform .45s cubic-bezier(.22, .9, .35, 1); }
+        .sm-panel {
+            transform: translateX(100%);
+            opacity: 0;
+            transition: transform .45s cubic-bezier(.22, .9, .35, 1), opacity .3s ease;
+        }
+        .sm-root.is-open .sm-prelayer { transform: translateX(0); }
+        .sm-root.is-open .sm-panel { transform: translateX(0); opacity: 1; }
+        /* gsap 接管时关闭 CSS 过渡，避免与逐帧 transform 打架 */
+        .sm-root.gsap-mode .sm-panel,
+        .sm-root.gsap-mode .sm-prelayer,
+        .sm-root.gsap-mode .sm-panel-itemLabel,
+        .sm-root.gsap-mode .sm-panel-itemNum,
+        .sm-root.gsap-mode .sm-socials-title,
+        .sm-root.gsap-mode .sm-socials-link { transition: none; }
 
         /* ===================== 打印版（白纸黑字，纯文字简历） ===================== */
         /* 统一 A4 页边距，避免浏览器默认值差异导致最后一页挤出版心 */
@@ -730,6 +798,9 @@
     <div class="splash-cursor-layer" aria-hidden="true">
         <canvas id="fluid"></canvas>
     </div>
+
+    <!-- 移动端 StaggeredMenu（React Bits 移植为原生 JS，≤760px 启用，内容由脚本构建） -->
+    <div id="smRoot" class="sm-root"></div>
 
     <!-- ===== 导航 ===== -->
     <nav class="navbar" id="navbar" role="navigation" aria-label="主导航">
@@ -1600,6 +1671,320 @@
             // 暴露给全局（兼容任何旧内联 onclick 引用）
             window.copyEmail = copyEmail;
         });
+    </script>
+
+    <!-- ===== 移动端 StaggeredMenu（React Bits 移植为原生 JS，依赖已在站点内的 gsap） ===== -->
+    <script>
+    (function () {
+        'use strict';
+
+        const root = document.getElementById('smRoot');
+        if (!root) return;
+
+        const hasGsap = typeof window.gsap !== 'undefined';
+        const gsap = hasGsap ? window.gsap : null;
+        const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        const ds = reduced ? 0 : 1; // 动画时长系数：尊重减少动效偏好时归零
+
+        const CONFIG = {
+            colors: ['#0F2A38', '#164E63'],   // 墨青错位层（两级依次滑入）
+            accentColor: '#38BDF8',           // 全站唯一强调色
+            menuButtonColor: '#EDF1F6',
+            openMenuButtonColor: '#38BDF8',   // 开启后按钮转为强调色
+            labelClosed: '菜单',
+            labelOpen: '关闭'
+        };
+        const offscreen = 100; // position: right
+
+        // 菜单项直接取自主导航，保证移动端与桌面端永不脱节
+        const items = Array.prototype.slice.call(document.querySelectorAll('.navbar-links a'))
+            .map(function (a) { return { label: a.textContent.trim(), link: a.getAttribute('href') || '' }; })
+            .filter(function (it) { return it.link.charAt(0) === '#'; });
+        if (!items.length) return;
+
+        const socials = [
+            { label: '邮箱 Kkssg1234@outlook.com', link: 'mailto:Kkssg1234@outlook.com' },
+            { label: '微信 k15377738285', copy: 'k15377738285' },
+            { label: '电话 153-7773-8285', link: 'tel:15377738285' }
+        ];
+
+        function el(tag, cls, text) {
+            const n = document.createElement(tag);
+            if (cls) n.className = cls;
+            if (text != null) n.textContent = text;
+            return n;
+        }
+        function pad2(n) { return n < 10 ? '0' + n : String(n); }
+
+        // ---------- 构建 DOM ----------
+        const prelayers = el('div', 'sm-prelayers');
+        prelayers.setAttribute('aria-hidden', 'true');
+        const layerEls = CONFIG.colors.map(function (c) {
+            const d = el('div', 'sm-prelayer');
+            d.style.background = c;
+            prelayers.appendChild(d);
+            return d;
+        });
+
+        const toggleBar = el('div', 'sm-toggle-bar');
+        const toggleBtn = el('button', 'sm-toggle');
+        toggleBtn.type = 'button';
+        toggleBtn.setAttribute('aria-label', '打开菜单');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.setAttribute('aria-controls', 'sm-panel');
+        const textWrap = el('span', 'sm-toggle-textWrap');
+        textWrap.setAttribute('aria-hidden', 'true');
+        const textInner = el('span', 'sm-toggle-textInner');
+        textWrap.appendChild(textInner);
+        const icon = el('span', 'sm-icon');
+        icon.setAttribute('aria-hidden', 'true');
+        icon.appendChild(el('span', 'sm-icon-line'));
+        icon.appendChild(el('span', 'sm-icon-line sm-icon-line-v'));
+        toggleBtn.appendChild(textWrap);
+        toggleBtn.appendChild(icon);
+        toggleBar.appendChild(toggleBtn);
+
+        const panel = el('aside', 'sm-panel');
+        panel.id = 'sm-panel';
+        panel.setAttribute('aria-hidden', 'true');
+        const inner = el('div', 'sm-panel-inner');
+
+        const list = el('ul', 'sm-panel-list');
+        list.setAttribute('role', 'list');
+        list.setAttribute('data-numbering', '');
+        items.forEach(function (it, idx) {
+            const li = el('li', 'sm-panel-itemWrap');
+            const a = el('a', 'sm-panel-item');
+            a.href = it.link;
+            a.setAttribute('aria-label', it.label);
+            a.setAttribute('data-index', String(idx + 1));
+            a.appendChild(el('span', 'sm-panel-itemLabel', it.label));
+            a.appendChild(el('span', 'sm-panel-itemNum', pad2(idx + 1)));
+            li.appendChild(a);
+            list.appendChild(li);
+        });
+        inner.appendChild(list);
+
+        const socialsWrap = el('div', 'sm-socials');
+        socialsWrap.setAttribute('aria-label', '联系方式');
+        const sTitle = el('h3', 'sm-socials-title', '联系方式');
+        const sList = el('ul', 'sm-socials-list');
+        sList.setAttribute('role', 'list');
+        socials.forEach(function (s) {
+            const li = el('li', 'sm-socials-item');
+            let node;
+            if (s.copy) {
+                node = el('button', 'sm-socials-link', s.label);
+                node.type = 'button';
+                node.addEventListener('click', function () {
+                    const done = function () {
+                        const old = node.textContent;
+                        node.textContent = '已复制';
+                        setTimeout(function () { node.textContent = old; }, 1600);
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s.copy).then(done).catch(function () {});
+                    else done();
+                });
+            } else {
+                node = el('a', 'sm-socials-link', s.label);
+                node.href = s.link;
+            }
+            li.appendChild(node);
+            sList.appendChild(li);
+        });
+        socialsWrap.appendChild(sTitle);
+        socialsWrap.appendChild(sList);
+
+        const printBtn = el('button', 'btn-pill sm-panel-print', '打印简历');
+        printBtn.type = 'button';
+        printBtn.addEventListener('click', function () { window.print(); });
+        socialsWrap.appendChild(printBtn);
+
+        inner.appendChild(socialsWrap);
+        panel.appendChild(inner);
+
+        root.style.setProperty('--sm-accent', CONFIG.accentColor);
+        root.appendChild(prelayers);
+        root.appendChild(toggleBar);
+        root.appendChild(panel);
+
+        // ---------- 元素集合 ----------
+        const q = function (sel) { return Array.prototype.slice.call(panel.querySelectorAll(sel)); };
+        const itemEls = function () { return q('.sm-panel-itemLabel'); };
+        const numEls = function () { return q('.sm-panel-itemNum'); };
+        const linkEls = function () { return q('.sm-socials-link'); };
+
+        function setLines(seq) {
+            textInner.innerHTML = '';
+            seq.forEach(function (l) { textInner.appendChild(el('span', 'sm-toggle-line', l)); });
+        }
+        setLines([CONFIG.labelClosed]);
+
+        let open = false, busy = false, openTl = null, closeTween = null;
+        let spinTween = null, textAnim = null, colorTween = null;
+
+        if (hasGsap) {
+            root.classList.add('gsap-mode');
+            gsap.set([panel].concat(layerEls), { xPercent: offscreen, opacity: 1 });
+            gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
+            gsap.set(toggleBtn, { color: CONFIG.menuButtonColor });
+            gsap.set(itemEls(), { yPercent: 140, rotate: 10 });
+            gsap.set(numEls(), { opacity: 0 });
+            gsap.set(sTitle, { opacity: 0 });
+            gsap.set(linkEls(), { y: 25, opacity: 0 });
+        }
+
+        // ---------- 开启时间线（错位层 → 面板 → 条目 → 序号 → 联系方式） ----------
+        function buildOpenTimeline() {
+            if (openTl) { openTl.kill(); openTl = null; }
+            if (closeTween) { closeTween.kill(); closeTween = null; }
+            const els = itemEls(), nums = numEls(), links = linkEls();
+            gsap.set(els, { yPercent: 140, rotate: 10 });
+            gsap.set(nums, { opacity: 0 });
+            gsap.set(sTitle, { opacity: 0 });
+            gsap.set(links, { y: 25, opacity: 0 });
+
+            const tl = gsap.timeline({ paused: true });
+            layerEls.forEach(function (ly, i) {
+                tl.fromTo(ly, { xPercent: offscreen }, { xPercent: 0, duration: 0.5 * ds, ease: 'power4.out' }, i * 0.07 * ds);
+            });
+            const lastTime = layerEls.length ? (layerEls.length - 1) * 0.07 * ds : 0;
+            const insertAt = lastTime + (layerEls.length ? 0.08 * ds : 0);
+            const panelDur = 0.65 * ds;
+            tl.fromTo(panel, { xPercent: offscreen }, { xPercent: 0, duration: panelDur, ease: 'power4.out' }, insertAt);
+
+            if (els.length) {
+                const itemsStart = insertAt + panelDur * 0.15;
+                tl.to(els, { yPercent: 0, rotate: 0, duration: 1 * ds, ease: 'power4.out', stagger: { each: 0.1 * ds, from: 'start' } }, itemsStart);
+                if (nums.length) {
+                    tl.to(nums, { opacity: 1, duration: 0.6 * ds, ease: 'power2.out', stagger: { each: 0.08 * ds, from: 'start' } }, itemsStart + 0.1 * ds);
+                }
+            }
+            const socialsStart = insertAt + panelDur * 0.4;
+            tl.to(sTitle, { opacity: 1, duration: 0.5 * ds, ease: 'power2.out' }, socialsStart);
+            if (links.length) {
+                tl.to(links, { y: 0, opacity: 1, duration: 0.55 * ds, ease: 'power3.out', stagger: { each: 0.08 * ds, from: 'start' } }, socialsStart + 0.04 * ds);
+            }
+            openTl = tl;
+            return tl;
+        }
+
+        function playOpen() {
+            if (!hasGsap) { root.classList.add('is-open'); return; }
+            if (busy) return;
+            busy = true;
+            const tl = buildOpenTimeline();
+            if (tl) { tl.eventCallback('onComplete', function () { busy = false; }); tl.play(0); }
+            else busy = false;
+        }
+
+        function playClose() {
+            if (!hasGsap) { root.classList.remove('is-open'); return; }
+            if (openTl) { openTl.kill(); openTl = null; }
+            if (closeTween) closeTween.kill();
+            closeTween = gsap.to(layerEls.concat([panel]), {
+                xPercent: offscreen,
+                duration: 0.32 * ds,
+                ease: 'power3.in',
+                overwrite: 'auto',
+                onComplete: function () {
+                    gsap.set(itemEls(), { yPercent: 140, rotate: 10 });
+                    gsap.set(numEls(), { opacity: 0 });
+                    gsap.set(sTitle, { opacity: 0 });
+                    gsap.set(linkEls(), { y: 25, opacity: 0 });
+                    busy = false;
+                }
+            });
+        }
+
+        function animateIcon(opening) {
+            if (!hasGsap) return;
+            if (spinTween) spinTween.kill();
+            spinTween = gsap.to(icon, opening
+                ? { rotate: 225, duration: 0.8 * ds, ease: 'power4.out', overwrite: 'auto' }
+                : { rotate: 0, duration: 0.35 * ds, ease: 'power3.inOut', overwrite: 'auto' });
+        }
+
+        function animateColor(opening) {
+            if (!hasGsap) return;
+            if (colorTween) colorTween.kill();
+            colorTween = gsap.to(toggleBtn, {
+                color: opening ? CONFIG.openMenuButtonColor : CONFIG.menuButtonColor,
+                delay: 0.18 * ds, duration: 0.3 * ds, ease: 'power2.out'
+            });
+        }
+
+        // 文字循环：菜单 / 关闭 交替滚动到位
+        function animateText(opening) {
+            if (!hasGsap) { setLines([opening ? CONFIG.labelOpen : CONFIG.labelClosed]); return; }
+            if (textAnim) textAnim.kill();
+            const cur = opening ? CONFIG.labelClosed : CONFIG.labelOpen;
+            const tgt = opening ? CONFIG.labelOpen : CONFIG.labelClosed;
+            const seq = [cur];
+            let last = cur;
+            for (let i = 0; i < 3; i++) {
+                last = (last === CONFIG.labelClosed) ? CONFIG.labelOpen : CONFIG.labelClosed;
+                seq.push(last);
+            }
+            if (last !== tgt) seq.push(tgt);
+            seq.push(tgt);
+            setLines(seq);
+            gsap.set(textInner, { yPercent: 0 });
+            const n = seq.length;
+            textAnim = gsap.to(textInner, {
+                yPercent: -(((n - 1) / n) * 100),
+                duration: (0.5 + n * 0.07) * ds,
+                ease: 'power4.out'
+            });
+        }
+
+        function setOpenState(target) {
+            open = target;
+            toggleBtn.setAttribute('aria-expanded', target ? 'true' : 'false');
+            toggleBtn.setAttribute('aria-label', target ? '关闭菜单' : '打开菜单');
+            panel.setAttribute('aria-hidden', target ? 'false' : 'true');
+        }
+
+        function toggleMenu() {
+            const target = !open;
+            setOpenState(target);
+            if (target) playOpen(); else playClose();
+            animateIcon(target);
+            animateColor(target);
+            animateText(target);
+        }
+
+        function closeMenu() {
+            if (!open) return;
+            setOpenState(false);
+            playClose();
+            animateIcon(false);
+            animateColor(false);
+            animateText(false);
+        }
+
+        toggleBtn.addEventListener('click', toggleMenu);
+
+        // 点击面板外或按 Esc 关闭
+        function outsideClose(e) {
+            if (!open) return;
+            if (!panel.contains(e.target) && !toggleBtn.contains(e.target)) closeMenu();
+        }
+        document.addEventListener('mousedown', outsideClose);
+        document.addEventListener('touchstart', outsideClose, { passive: true });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+
+        // 面板内的锚点：只负责收起面板。
+        // 平滑滚动由主脚本的通用 a[href^="#"] 处理器接管（DOMContentLoaded 时会覆盖到这些链接），避免重复绑定。
+        q('.sm-panel-item').forEach(function (a) {
+            a.addEventListener('click', function () { closeMenu(); });
+        });
+
+        // 视口放大到桌面宽度时收起，避免与桌面端导航重复
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 760 && open) closeMenu();
+        });
+    })();
     </script>
 
     <!-- ===== 光标流体拖尾 SplashCursor（React Bits 组件移植为原生 JS，无 React 依赖） ===== -->
