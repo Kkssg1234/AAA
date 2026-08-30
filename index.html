@@ -131,13 +131,14 @@
             text-align: center;
             padding: var(--s5) var(--s3);
         }
-        .cover__inner { max-width: 1000px; }
+        .cover__inner { max-width: 1320px; }
         /* 封面箴言：由 StrokeText（React Bits 移植）逐字描边绘入，
            先以青蓝描出轮廓、再以近白填充。视觉由内部 SVG 提供，故此处的「字号」由
            容器宽度经 clamp() 响应式控制：桌面大、移动端不溢出也不折行（SVG 单行缩放）。 */
         .cover__motto {
             margin: 0 auto;
-            max-width: clamp(300px, 90vw, 1000px);
+            /* 桌面端放大：上限 1320px + 94vw，冲击力更强；移动端由 ≤760px 媒体查询收敛到装订线内 */
+            max-width: clamp(320px, 94vw, 1320px);
         }
         /* StrokeText 基础样式（移植自 React Bits） */
         .stroke-text {
@@ -572,8 +573,21 @@
             .navbar-inner { padding: 0 28px; }
             .cover { padding: var(--s5) 28px; }
 
-            .skill { grid-template-columns: minmax(0, 1fr) 92px; }
-            .skill__meter { grid-column: 1 / -1; }
+            /* 封面主标题：限制在 28px 装订线内（100vw-56px），移动端不贴边、不错行 */
+            .cover__motto { max-width: calc(100vw - 56px); }
+
+            /* 能力行：移动端改两行堆叠——名称+熟练度一行，描述+刻度线整行，
+               避免描述被挤进 92px 列而糊成一团 */
+            .skill {
+                grid-template-columns: minmax(0, 1fr) auto;
+                grid-template-areas:
+                    "name lvl"
+                    "desc desc";
+                gap: var(--s1) var(--s3);
+            }
+            .skill__name { grid-area: name; }
+            .skill > div { grid-area: desc; }
+            .skill__lvl { grid-area: lvl; justify-self: end; }
         }
 
         @media (max-width: 560px) {
@@ -836,8 +850,8 @@
             opacity: 0;
             transition: transform .45s cubic-bezier(.22, .9, .35, 1), opacity .3s ease;
         }
-        .sm-root.is-open .sm-prelayer { transform: translateX(0); }
-        .sm-root.is-open .sm-panel { transform: translateX(0); opacity: 1; }
+        .sm-root.is-open .sm-prelayer { transform: translateX(0) !important; }
+        .sm-root.is-open .sm-panel { transform: translateX(0) !important; opacity: 1 !important; }
         /* gsap 接管时关闭 CSS 过渡，避免与逐帧 transform 打架 */
         .sm-root.gsap-mode .sm-panel,
         .sm-root.gsap-mode .sm-prelayer,
@@ -2391,8 +2405,16 @@
             // 安全网：即便 gsap 时间线因任何原因未生效，CSS 也能保证面板可见（不改配色）
             root.classList.add('is-open');
             const tl = buildOpenTimeline();
-            if (tl) { tl.eventCallback('onComplete', function () { busy = false; }); tl.play(0); }
-            else { busy = false; root.classList.remove('is-open'); }
+            if (tl) {
+                tl.eventCallback('onComplete', function () {
+                    busy = false;
+                    /* 动画结束后清除内联 transform，改由 CSS is-open（!important）接管静止态，避免残留 */
+                    gsap.set([panel].concat(layerEls), { clearProps: 'transform' });
+                });
+                tl.play(0);
+            } else {
+                busy = false; /* 时间线构建失败时保留 is-open，交由 CSS !important 兜底显示面板（不改配色） */
+            }
         }
 
         function playClose() {
