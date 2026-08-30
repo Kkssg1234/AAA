@@ -116,19 +116,31 @@
             background:
                 linear-gradient(180deg, rgba(10, 12, 16, .68) 0%, rgba(10, 12, 16, .80) 45%, rgba(10, 12, 16, .90) 100%);
         }
-        /* 静态兜底背景：仅当背景视频因内核拦截/加载失败未开播时才显示（由门控脚本加 .show-fallback 触发）。
-           正常浏览器视频照常播放，此层保持透明、零视觉影响。渐变取 Aura 暗色青蓝调，与视频氛围一致。 */
+        /* 动态兜底背景：仅当背景视频因内核拦截/加载失败未开播时才显示（由门控脚本加 .show-fallback 触发）。
+           正常浏览器视频照常播放，此层保持透明、零视觉影响。渐变取 Aura 暗色青蓝调，与视频氛围一致；
+           加 @keyframes bgDrift 缓慢流动，使微信等不播视频的内核也能看到「背景动画」而非静止纯色。 */
+        @keyframes bgDrift {
+            0%   { background-position: 0% 0%, 100% 100%, 50% 50%; }
+            50%  { background-position: 28% 18%, 72% 82%, 50% 50%; }
+            100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+        }
         .bg-stage__fallback {
             position: absolute; inset: 0; z-index: 0;
             opacity: 0;
             transition: opacity .8s ease;
             background:
-                radial-gradient(120% 120% at 18% 8%, rgba(56, 189, 248, .16), transparent 46%),
-                radial-gradient(130% 130% at 88% 92%, rgba(14, 165, 233, .18), transparent 52%),
+                radial-gradient(120% 120% at 18% 8%, rgba(56, 189, 248, .22), transparent 46%),
+                radial-gradient(130% 130% at 88% 92%, rgba(14, 165, 233, .26), transparent 52%),
                 linear-gradient(160deg, #0c1119 0%, #0a0e16 55%, #070a11 100%);
+            background-size: 180% 180%;
+            animation: bgDrift 24s ease-in-out infinite;
         }
         .bg-stage.show-fallback .bg-stage__fallback { opacity: 1; }
         .bg-stage.show-fallback video { opacity: 0 !important; }
+        /* 兜底模式下减轻暗色遮罩，让流动渐变更明显（基础渐变本身已够暗，正文对比度仍达标） */
+        .bg-stage.show-fallback::after {
+            background: linear-gradient(180deg, rgba(10, 12, 16, .46) 0%, rgba(10, 12, 16, .58) 45%, rgba(10, 12, 16, .72) 100%);
+        }
 
         /* ===================== 入场 / 滚动揭示 ===================== */
         .js .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s cubic-bezier(.22, .9, .35, 1); }
