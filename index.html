@@ -798,7 +798,7 @@
 
     <!-- Aura 风格背景：全屏循环视频 + 暗化遮罩（离线时由 .bg-stage::after 暗色渐变兜底） -->
     <div class="bg-stage" aria-hidden="true">
-        <video autoplay loop muted playsinline preload="auto" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4"></video>
+        <video autoplay loop muted playsinline webkit-playsinline x5-playsinline preload="auto" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4"></video>
     </div>
 
     <!-- 光标流体拖尾（WebGL）：z-index 50，位于内容之上、导航栏之下；pointer-events:none 不拦截点击 -->
@@ -1705,11 +1705,15 @@
       window.__bgReady = new Promise(function (resolve) {
         var vid = document.querySelector('.bg-stage video');
         if (!vid) { resolve(); return; }
-        if (vid.readyState >= 2) { resolve(); return; } // 已有首帧 / 可播放
+        // 微信/X5 等 WebView 常拦截声明式 autoplay，需显式 play() 解锁（muted 视频通常允许）
+        var tryPlay = function () {
+          try { var p = vid.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+        };
         var done = false;
         var finish = function () { if (!done) { done = true; resolve(); } };
-        vid.addEventListener('loadeddata', finish, { once: true });
-        vid.addEventListener('canplay', finish, { once: true });
+        if (vid.readyState >= 2) { tryPlay(); finish(); return; } // 已有首帧 / 可播放
+        vid.addEventListener('loadeddata', function () { tryPlay(); finish(); }, { once: true });
+        vid.addEventListener('canplay', function () { tryPlay(); finish(); }, { once: true });
         vid.addEventListener('error', finish, { once: true });
         setTimeout(finish, 1600); // 兜底：视频过慢也不阻塞标题动画
       });
