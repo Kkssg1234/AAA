@@ -132,45 +132,30 @@
             padding: var(--s5) var(--s3);
         }
         .cover__inner { max-width: 900px; }
-        /* 封面箴言：艺术字处理。青蓝渐变填充 + 柔和辉光 + 缓慢流光，
-           色调与鼠标流体光效（#38BDF8）保持一致 */
+        /* 封面箴言：由 StrokeText（React Bits 移植）逐字描边绘入，
+           先以青蓝描出轮廓、再以近白填充。视觉由内部 SVG 提供，故此处只做排版容器。 */
         .cover__motto {
-            font-family: var(--font-serif);
-            font-weight: 500;
-            font-size: clamp(2.1rem, 6.6vw, 4.6rem);
-            line-height: 1.32;
-            letter-spacing: .16em;
-            margin: 0;
-            text-indent: .16em;
-
-            background-image: linear-gradient(100deg,
-                #F4FBFF 0%,
-                #A9DEFA 26%,
-                #38BDF8 50%,
-                #C7ECFF 74%,
-                #F4FBFF 100%);
-            background-size: 220% 100%;
-            background-position: 0% 50%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            -webkit-text-fill-color: transparent;
-            filter:
-                drop-shadow(0 0 30px rgba(56, 189, 248, .40))
-                drop-shadow(0 2px 18px rgba(56, 189, 248, .22));
-            animation: mottoShine 9s ease-in-out infinite;
+            margin: 0 auto;
+            max-width: 820px;
         }
-        @keyframes mottoShine {
-            0%, 100% { background-position: 0% 50%; }
-            50%      { background-position: 100% 50%; }
+        /* StrokeText 基础样式（移植自 React Bits） */
+        .stroke-text {
+            display: block;
+            width: 100%;
+            line-height: 0;
         }
-        /* 回退：浏览器不支持 background-clip:text 时恢复纯色，避免文字不可见 */
-        @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-            .cover__motto {
-                color: #F4F7FA;
-                -webkit-text-fill-color: currentColor;
-                background-image: none;
-            }
+        .stroke-text__svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            overflow: visible;
+        }
+        .stroke-text__stroke,
+        .stroke-text__fill {
+            user-select: none;
+        }
+        .stroke-text__stroke {
+            filter: drop-shadow(0 0 18px rgba(56, 189, 248, .28));
         }
         .cover__rule {
             width: 56px;
@@ -621,12 +606,14 @@
            mix-blend-mode: lighten 让黑色底在深色页面上也自然消失，只留下胶囊与粒子。 */
         .gooey-nav-container {
             position: relative;
-            --color-1: #38BDF8;
-            --color-2: #7DD3FC;
-            --color-3: #0EA5E9;
-            --color-4: #A5F3FC;
-            --gn-pill: #38BDF8;
-            --gn-pill-ink: #04121A;
+            /* 导航青蓝压暗一档（#38BDF8 → 更沉的青蓝），更贴合克制的整体风格；
+               胶囊文字相应翻为浅色以保证对比度。全局 --accent 不动，仅导航收敛。 */
+            --color-1: #0891B2;
+            --color-2: #0E7490;
+            --color-3: #06B6D4;
+            --color-4: #22D3EE;
+            --gn-pill: #0891B2;
+            --gn-pill-ink: #EAFBFF;
         }
         .gooey-nav-container .gooey-nav {
             display: flex;
@@ -990,7 +977,19 @@
         <!-- 封面首屏：进入站点即展示，沿用背景视频与光标流体动画；向下滚动进入简历正文 -->
         <section class="cover" id="cover">
             <div class="cover__inner">
-                <h1 class="cover__motto">博学强志，笃行致远</h1>
+                <h1 class="cover__motto" id="strokeMotto"
+                    data-text="博学强志，笃行致远"
+                    data-stroke="#38BDF8"
+                    data-fill="#F4F7FA"
+                    data-fontsize="120"
+                    data-weight="500"
+                    data-spacing="8"
+                    data-strokewidth="2.4"
+                    data-draw="1.6"
+                    data-filldelay="0.2"
+                    data-stagger="0.08"
+                    data-ease="power2.out"
+                    data-fillmode="wipe">博学强志，笃行致远</h1>
                 <div class="cover__rule" aria-hidden="true"></div>
                 <p class="cover__name">匡子洋</p>
             </div>
@@ -1839,6 +1838,161 @@
             // 暴露给全局（兼容任何旧内联 onclick 引用）
             window.copyEmail = copyEmail;
         });
+    </script>
+
+    <!-- ===== 封面箴言 StrokeText（React Bits 移植为原生 JS，依赖站点内的 gsap） ===== -->
+    <script>
+    (function () {
+      const root = document.getElementById('strokeMotto');
+      if (!root) return;
+      const NS = 'http://www.w3.org/2000/svg';
+      const gsap = window.gsap;
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const text = (root.getAttribute('data-text') || root.textContent || 'Draw Attention').trim();
+      const strokeColor = root.getAttribute('data-stroke') || '#38BDF8';
+      const fillColor = root.getAttribute('data-fill') || '#F4F7FA';
+      const fontSize = parseFloat(root.getAttribute('data-fontsize') || '120');
+      const fontWeight = root.getAttribute('data-weight') || '500';
+      const letterSpacing = parseFloat(root.getAttribute('data-spacing') || '0');
+      const strokeWidth = parseFloat(root.getAttribute('data-strokewidth') || '2.4');
+      const drawDuration = parseFloat(root.getAttribute('data-draw') || '1.6');
+      const fillDelay = parseFloat(root.getAttribute('data-filldelay') || '0.2');
+      const stagger = parseFloat(root.getAttribute('data-stagger') || '0.08');
+      const ease = root.getAttribute('data-ease') || 'power2.out';
+      const fillMode = root.getAttribute('data-fillmode') || 'wipe';
+      const reverse = root.getAttribute('data-reverse') === 'true';
+
+      const chars = Array.from(text);
+      const dash = Math.max(fontSize * 7, 200);
+      const fallbackFont = '"Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", "STSong", "SimSun", Georgia, serif';
+      const fsStack = (getComputedStyle(root).getPropertyValue('--font-serif') || '').trim() || fallbackFont;
+
+      const span = document.createElement('span');
+      span.className = 'stroke-text';
+      span.setAttribute('role', 'img');
+      span.setAttribute('aria-label', text);
+
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('class', 'stroke-text__svg');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svg.setAttribute('aria-hidden', 'true');
+
+      let wipeRect = null;
+      if (fillMode === 'wipe') {
+        const defs = document.createElementNS(NS, 'defs');
+        const clip = document.createElementNS(NS, 'clipPath');
+        clip.setAttribute('id', 'strokeMottoWipe');
+        clip.setAttribute('clipPathUnits', 'userSpaceOnUse');
+        wipeRect = document.createElementNS(NS, 'rect');
+        wipeRect.setAttribute('x', '0');
+        wipeRect.setAttribute('y', '0');
+        wipeRect.setAttribute('width', '0');
+        wipeRect.setAttribute('height', '200');
+        clip.appendChild(wipeRect);
+        defs.appendChild(clip);
+        svg.appendChild(defs);
+      }
+
+      const fontStyle = 'font-family: ' + fsStack +
+        '; font-size: ' + fontSize + 'px; font-weight: ' + fontWeight + '; letter-spacing: ' + letterSpacing + 'px;';
+
+      const strokeText = document.createElementNS(NS, 'text');
+      strokeText.setAttribute('class', 'stroke-text__stroke');
+      strokeText.setAttribute('x', '0');
+      strokeText.setAttribute('y', '0');
+      strokeText.setAttribute('fill', 'none');
+      strokeText.setAttribute('stroke', strokeColor);
+      strokeText.setAttribute('stroke-width', strokeWidth);
+      strokeText.setAttribute('stroke-linejoin', 'round');
+      strokeText.setAttribute('stroke-linecap', 'round');
+      strokeText.setAttribute('style', fontStyle);
+
+      const fillText = document.createElementNS(NS, 'text');
+      fillText.setAttribute('class', 'stroke-text__fill');
+      fillText.setAttribute('x', '0');
+      fillText.setAttribute('y', '0');
+      fillText.setAttribute('fill', fillColor);
+      fillText.setAttribute('stroke', 'none');
+      fillText.setAttribute('style', fontStyle);
+      if (fillMode === 'wipe' && wipeRect) fillText.setAttribute('clip-path', 'url(#strokeMottoWipe)');
+
+      chars.forEach(function (ch) {
+        const s = document.createElementNS(NS, 'tspan');
+        s.setAttribute('data-stroke-char', '');
+        s.textContent = ch;
+        strokeText.appendChild(s);
+        const f = document.createElementNS(NS, 'tspan');
+        f.setAttribute('data-fill-char', '');
+        f.textContent = ch;
+        fillText.appendChild(f);
+      });
+
+      svg.appendChild(strokeText);
+      svg.appendChild(fillText);
+      span.appendChild(svg);
+      root.textContent = '';
+      root.appendChild(span);
+
+      const strokes = Array.from(span.querySelectorAll('[data-stroke-char]'));
+      const fills = Array.from(span.querySelectorAll('[data-fill-char]'));
+
+      // 无 gsap 或减少动效：直接呈现终态（已完整绘入），不做描边动画
+      if (!gsap || prefersReduced) return;
+
+      // 初始即隐藏描边，避免「先全显再重绘」的闪动
+      gsap.set(strokes, { strokeDasharray: dash, strokeDashoffset: dash });
+      if (fillMode !== 'none' && fillMode !== 'wipe') gsap.set(fills, { opacity: 0 });
+
+      let box = null;
+      const measure = function () {
+        let bbox;
+        try { bbox = strokeText.getBBox(); } catch (e) { return false; }
+        if (!bbox || !bbox.width) return false;
+        const pad = Math.max(strokeWidth, fontSize * 0.1);
+        box = { x: bbox.x - pad, y: bbox.y - pad, width: bbox.width + pad * 2, height: bbox.height + pad * 2 };
+        svg.setAttribute('viewBox', box.x + ' ' + box.y + ' ' + box.width + ' ' + box.height);
+        if (wipeRect) {
+          wipeRect.setAttribute('x', box.x);
+          wipeRect.setAttribute('y', box.y);
+          wipeRect.setAttribute('height', box.height);
+        }
+        return true;
+      };
+
+      const run = function () {
+        if (!measure()) { requestAnimationFrame(run); return; }
+        const useWipe = fillMode === 'wipe';
+        const fillEnabled = fillMode !== 'none';
+        const fillDuration = Math.max(0.4, drawDuration * 0.5);
+        const staggerConfig = reverse ? { each: stagger, from: 'end' } : stagger;
+        const targets = strokes.concat(fills);
+        if (wipeRect) targets.push(wipeRect);
+
+        const setStart = function () {
+          gsap.killTweensOf(targets);
+          gsap.set(strokes, { strokeDasharray: dash, strokeDashoffset: dash });
+          gsap.set(fills, { opacity: useWipe ? 1 : 0 });
+          if (wipeRect) wipeRect.setAttribute('width', '0');
+        };
+        setStart();
+
+        const tl = gsap.timeline({ paused: true, defaults: { overwrite: 'auto' } });
+        tl.to(strokes, { strokeDashoffset: 0, duration: drawDuration, ease: ease, stagger: staggerConfig }, 0);
+        if (useWipe && wipeRect) {
+          tl.to(wipeRect, { attr: { width: box.width }, duration: fillDuration, ease: 'power2.inOut' }, drawDuration + fillDelay);
+        } else if (fillEnabled) {
+          tl.to(fills, { opacity: 1, duration: fillDuration, ease: 'power2.out', stagger: staggerConfig }, drawDuration + fillDelay);
+        }
+        tl.play(0);
+      };
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () { measure(); run(); }).catch(function () { run(); });
+      } else {
+        run();
+      }
+    })();
     </script>
 
     <!-- ===== 桌面端 GooeyNav（React Bits 移植为原生 JS，无依赖） ===== -->
