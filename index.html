@@ -131,15 +131,15 @@
             text-align: center;
             padding: var(--s5) var(--s3);
         }
-        .cover__inner { width: 100%; max-width: 1680px; }
+        .cover__inner { width: 100%; max-width: 1440px; }
         /* 封面箴言：由 StrokeText（React Bits 移植）逐字描边绘入，
            先以青蓝描出轮廓、再以近白填充。视觉由内部 SVG 提供，故此处的「字号」由
            容器宽度经 clamp() 响应式控制：桌面大、移动端不溢出也不折行（SVG 单行缩放）。 */
         .cover__motto {
             width: 100%;
             margin: 0 auto;
-            /* 首屏动画再次放大：容器改 100% 确定宽度，SVG 才真正随容器缩放（此前因 grid 居中使容器收缩到内容宽度，max-width 上限从未生效）；上限 1680px、桌面近满宽，字号与冲击力更强；移动端由 ≤760px 媒体查询收敛到装订线内 */
-            max-width: clamp(420px, 100vw, 1680px);
+            /* 首屏标题尺寸适中：容器改 100% 确定宽度，SVG 才真正随容器缩放（此前因 grid 居中使容器收缩到内容宽度，max-width 上限从未生效）；上限 1440px、桌面近满宽但不顶边，字号与冲击力较 1680 收紧一档；移动端由 ≤760px 媒体查询收敛到装订线内 */
+            max-width: clamp(420px, 100vw, 1440px);
         }
         /* StrokeText 基础样式（移植自 React Bits） */
         .stroke-text {
@@ -795,7 +795,7 @@
 
     <!-- Aura 风格背景：全屏循环视频 + 暗化遮罩（离线时由 .bg-stage::after 暗色渐变兜底） -->
     <div class="bg-stage" aria-hidden="true">
-        <video autoplay loop muted playsinline src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4"></video>
+        <video autoplay loop muted playsinline preload="auto" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4"></video>
     </div>
 
     <!-- 光标流体拖尾（WebGL）：z-index 50，位于内容之上、导航栏之下；pointer-events:none 不拦截点击 -->
@@ -838,7 +838,7 @@
                     data-fill="#F4F7FA"
                     data-fontsize="120"
                     data-weight="500"
-                    data-spacing="18"
+                    data-spacing="16"
                     data-strokewidth="2.4"
                     data-draw="2.2"
                     data-filldelay="0.25"
@@ -1635,7 +1635,11 @@
             // 封面：入场动画（分段上浮），并控制导航栏在滚过封面后才淡入
             const coverEl = $('#cover');
             if (coverEl) {
-                requestAnimationFrame(() => requestAnimationFrame(() => coverEl.classList.add('is-ready')));
+                // 背景就绪后再淡入封面：等背景视频可播放（或兜底超时），确保标题动画播放时背景已就位
+                const bgReady = window.__bgReady || Promise.resolve();
+                bgReady.then(() => {
+                    requestAnimationFrame(() => requestAnimationFrame(() => coverEl.classList.add('is-ready')));
+                });
                 if ('IntersectionObserver' in window && navbarEl) {
                     const navObs = new IntersectionObserver(es => {
                         // 封面离开视口即显示导航；回到封面则隐藏，保证封面纯净
@@ -1688,6 +1692,25 @@
             // 暴露给全局（兼容任何旧内联 onclick 引用）
             window.copyEmail = copyEmail;
         });
+    </script>
+
+    <!-- 背景就绪门控：标题与封面入场动画需等背景视频可播放（或兜底超时）后才启动，
+         避免标题在背景仍在缓冲时先播放；视频加载失败时由 .bg-stage::after 暗色渐变兜底。
+         该 Promise 在解析期即定义，供下方 StrokeText 脚本与主脚本共同读取。 -->
+    <script>
+    (function () {
+      window.__bgReady = new Promise(function (resolve) {
+        var vid = document.querySelector('.bg-stage video');
+        if (!vid) { resolve(); return; }
+        if (vid.readyState >= 2) { resolve(); return; } // 已有首帧 / 可播放
+        var done = false;
+        var finish = function () { if (!done) { done = true; resolve(); } };
+        vid.addEventListener('loadeddata', finish, { once: true });
+        vid.addEventListener('canplay', finish, { once: true });
+        vid.addEventListener('error', finish, { once: true });
+        setTimeout(finish, 1600); // 兜底：视频过慢也不阻塞标题动画
+      });
+    })();
     </script>
 
     <!-- ===== 封面箴言 StrokeText（React Bits 移植为原生 JS，依赖站点内的 gsap） ===== -->
@@ -1839,11 +1862,16 @@
         else tl.play(0);
       };
 
-      if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(function () { measure(); run(); }).catch(function () { run(); });
-      } else {
+      // 背景就绪后再绘入标题：等字体就绪且背景视频可播放（或兜底超时），
+      // 保证标题描边动画播放时背景已就位，不在黑屏/缓冲画面上绘制。
+      const fontsReady = (document.fonts && document.fonts.ready)
+        ? document.fonts.ready.catch(function () { return null; })
+        : Promise.resolve();
+      const bgReady = window.__bgReady || Promise.resolve();
+      Promise.all([fontsReady, bgReady]).then(function () {
+        if (!measure()) { requestAnimationFrame(function () { run(); }); return; }
         run();
-      }
+      }).catch(function () { run(); });
     })();
     </script>
 
