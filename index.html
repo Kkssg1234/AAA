@@ -104,6 +104,7 @@
         .bg-stage video {
             width: 100%; height: 100%; object-fit: cover;
             opacity: .75;
+            transition: opacity .8s ease;
             filter: contrast(1.02) saturate(1.12) brightness(1.08);
         }
         /* 暗色遮罩：全面降低不透明度（.72/.82/.94 → .52/.64/.82）。
@@ -115,6 +116,19 @@
             background:
                 linear-gradient(180deg, rgba(10, 12, 16, .68) 0%, rgba(10, 12, 16, .80) 45%, rgba(10, 12, 16, .90) 100%);
         }
+        /* 静态兜底背景：仅当背景视频因内核拦截/加载失败未开播时才显示（由门控脚本加 .show-fallback 触发）。
+           正常浏览器视频照常播放，此层保持透明、零视觉影响。渐变取 Aura 暗色青蓝调，与视频氛围一致。 */
+        .bg-stage__fallback {
+            position: absolute; inset: 0; z-index: 0;
+            opacity: 0;
+            transition: opacity .8s ease;
+            background:
+                radial-gradient(120% 120% at 18% 8%, rgba(56, 189, 248, .16), transparent 46%),
+                radial-gradient(130% 130% at 88% 92%, rgba(14, 165, 233, .18), transparent 52%),
+                linear-gradient(160deg, #0c1119 0%, #0a0e16 55%, #070a11 100%);
+        }
+        .bg-stage.show-fallback .bg-stage__fallback { opacity: 1; }
+        .bg-stage.show-fallback video { opacity: 0 !important; }
 
         /* ===================== 入场 / 滚动揭示 ===================== */
         .js .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s cubic-bezier(.22, .9, .35, 1); }
@@ -171,9 +185,9 @@
         .cover__name {
             margin: 0;
             margin-top: var(--s4);
-            font-size: .95rem;
-            letter-spacing: .42em;
-            text-indent: .42em;
+            font-size: 1.3rem;
+            letter-spacing: .32em;
+            text-indent: .32em;
             color: var(--ink-faint);
             text-transform: none;
         }
@@ -798,6 +812,7 @@
 
     <!-- Aura 风格背景：全屏循环视频 + 暗化遮罩（离线时由 .bg-stage::after 暗色渐变兜底） -->
     <div class="bg-stage" aria-hidden="true">
+        <div class="bg-stage__fallback"></div>
         <video autoplay loop muted playsinline webkit-playsinline x5-playsinline
                x5-video-player-type="h5" x5-video-player-fullscreen="false" x5-video-orientation="portraint"
                preload="auto" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4"></video>
@@ -1707,6 +1722,16 @@
       window.__bgReady = new Promise(function (resolve) {
         var vid = document.querySelector('.bg-stage video');
         if (!vid) { resolve(); return; }
+        var stage = document.querySelector('.bg-stage');
+        // 兜底背景：视频因内核拦截/加载失败未能真正开播时，显示静态渐变背景，避免空白破图。
+        // 该逻辑仅在「视频确实没播起来」时触发；正常浏览器视频照常播放，此层保持透明、完全不受影响。
+        var markFallback = function () { if (stage) stage.classList.add('show-fallback'); };
+        var clearFallback = function () { if (stage) stage.classList.remove('show-fallback'); };
+        if (stage) {
+          vid.addEventListener('playing', clearFallback); // 哪怕晚于兜底触发，开播即隐藏静态背景
+          vid.addEventListener('error', markFallback);
+        }
+
         // 微信/X5/TBS 等 WebView 默认用「系统播放器」，会把背景视频强制全屏接管（用户只看到孤立 MP4）。
         // 因此：① 视频标签已加 x5-video-player-type="h5" 强制同层 H5 内联播放；
         //      ② 显式 play() 解锁；③ 监听微信 JSBridge 与首次触摸/点击手势触发播放（部分内核要求用户手势）。
@@ -1714,7 +1739,7 @@
           try { var p = vid.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
         };
         var done = false;
-        var finish = function () { if (!done) { done = true; resolve(); } };
+        var earlyFinish = function () { if (!done) { done = true; resolve(); } };
 
         // 手势解锁：顽固 WebView（微信、部分手机浏览器）需用户首次交互才能 autoplay
         var unlock = function () {
@@ -1730,11 +1755,16 @@
           document.addEventListener('WeixinJSBridgeReady', tryPlay, false); // 微信 JSBridge 注入后解锁
         }
 
-        if (vid.readyState >= 2) { tryPlay(); finish(); return; } // 已有首帧 / 可播放
-        vid.addEventListener('loadeddata', function () { tryPlay(); finish(); }, { once: true });
-        vid.addEventListener('canplay', function () { tryPlay(); finish(); }, { once: true });
-        vid.addEventListener('error', finish, { once: true });
-        setTimeout(finish, 1600); // 兜底：视频过慢也不阻塞标题动画
+        if (vid.readyState >= 2) { tryPlay(); earlyFinish(); return; } // 已有首帧 / 可播放
+        vid.addEventListener('loadeddata', function () { tryPlay(); earlyFinish(); }, { once: true });
+        vid.addEventListener('canplay', function () { tryPlay(); earlyFinish(); }, { once: true });
+        // 兜底超时：1.6s 后视频仍未真正开播（被内核/策略拦截）→ 显示静态渐变背景，且不再阻塞标题动画
+        setTimeout(function () {
+          if (!done) {
+            if (vid.paused && vid.currentTime === 0) markFallback();
+            done = true; resolve();
+          }
+        }, 1600);
       });
     })();
     </script>
