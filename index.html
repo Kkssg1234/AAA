@@ -131,14 +131,15 @@
             text-align: center;
             padding: var(--s5) var(--s3);
         }
-        .cover__inner { max-width: 1680px; }
+        .cover__inner { width: 100%; max-width: 1680px; }
         /* 封面箴言：由 StrokeText（React Bits 移植）逐字描边绘入，
            先以青蓝描出轮廓、再以近白填充。视觉由内部 SVG 提供，故此处的「字号」由
            容器宽度经 clamp() 响应式控制：桌面大、移动端不溢出也不折行（SVG 单行缩放）。 */
         .cover__motto {
+            width: 100%;
             margin: 0 auto;
-            /* 首屏动画再次放大：桌面端上限 1680px + 98vw，字号与冲击力更强；移动端由 ≤760px 媒体查询收敛到装订线内 */
-            max-width: clamp(420px, 98vw, 1680px);
+            /* 首屏动画再次放大：容器改 100% 确定宽度，SVG 才真正随容器缩放（此前因 grid 居中使容器收缩到内容宽度，max-width 上限从未生效）；上限 1680px、桌面近满宽，字号与冲击力更强；移动端由 ≤760px 媒体查询收敛到装订线内 */
+            max-width: clamp(420px, 100vw, 1680px);
         }
         /* StrokeText 基础样式（移植自 React Bits） */
         .stroke-text {
