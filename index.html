@@ -131,15 +131,16 @@
             text-align: center;
             padding: var(--s5) var(--s3);
         }
-        .cover__inner { width: 100%; max-width: 1440px; }
+        .cover__inner { width: 100%; max-width: 1280px; }
         /* 封面箴言：由 StrokeText（React Bits 移植）逐字描边绘入，
            先以青蓝描出轮廓、再以近白填充。视觉由内部 SVG 提供，故此处的「字号」由
            容器宽度经 clamp() 响应式控制：桌面大、移动端不溢出也不折行（SVG 单行缩放）。 */
         .cover__motto {
             width: 100%;
             margin: 0 auto;
-            /* 首屏标题尺寸适中：容器改 100% 确定宽度，SVG 才真正随容器缩放（此前因 grid 居中使容器收缩到内容宽度，max-width 上限从未生效）；上限 1440px、桌面近满宽但不顶边，字号与冲击力较 1680 收紧一档；移动端由 ≤760px 媒体查询收敛到装订线内 */
-            max-width: clamp(420px, 100vw, 1440px);
+            /* 首屏标题拆两行上下错落：以全角逗号「，」为界，后半句右移 0.78em、下移 1.12em 形成阶梯；容器 100% 确定宽度使 SVG 随容器缩放；
+               上限 480px（两行各四字）故整体比单行 1440 收紧一档，字号更克制；移动端由 ≤760px 媒体查询收敛到装订线内 */
+            max-width: clamp(320px, 84vw, 480px);
         }
         /* StrokeText 基础样式（移植自 React Bits） */
         .stroke-text {
@@ -279,7 +280,7 @@
         /* ===================== 容器与区块 ===================== */
         main { position: relative; z-index: 2; }
         .container { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--s3); }
-        .section { padding: var(--s6) 0; position: relative; }
+        .section { padding-top: var(--s6); padding-bottom: var(--s6); position: relative; }
         /* 封面之后的第一个板块加大顶部留白（不能用 :first-of-type，首个 section 是封面） */
         .cover + .section { padding-top: var(--s7); }
 
@@ -563,7 +564,7 @@
             .about-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
             .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .portfolio-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .section { padding: var(--s5) 0; }
+            .section { padding-top: var(--s5); padding-bottom: var(--s5); }
         }
 
         @media (max-width: 760px) {
@@ -576,8 +577,8 @@
             .navbar-inner { padding: 0 32px; }
             .cover { padding: var(--s5) 32px; }
 
-            /* 封面主标题：限制在 32px 装订线内（100vw-64px），移动端不贴边、不错行 */
-            .cover__motto { max-width: calc(100vw - 64px); }
+            /* 封面主标题：拆两行后仍限制在 32px 装订线内（100vw-64px），并封顶 480px 避免小屏两行字过大；移动端不贴边、不错行 */
+            .cover__motto { max-width: min(calc(100vw - 64px), 480px); }
 
             /* 能力行：移动端改两行堆叠——名称+熟练度一行，描述+刻度线整行，
                避免描述被挤进 92px 列而糊成一团 */
@@ -600,7 +601,7 @@
             .cover__motto { letter-spacing: .1em; text-indent: .1em; }
             .cert-row { grid-template-columns: minmax(0, 1fr); }
             /* 小屏加大纵向呼吸：区块上下留白 64px → 76px */
-            .section { padding: 76px 0; }
+            .section { padding-top: 76px; padding-bottom: 76px; }
             .sec-head { margin-bottom: var(--s4); }
             /* 成果数据之间补上分隔，避免单列堆叠时糊成一片 */
             .stat { padding-top: var(--s3); }
@@ -838,7 +839,7 @@
                     data-fill="#F4F7FA"
                     data-fontsize="120"
                     data-weight="500"
-                    data-spacing="16"
+                    data-spacing="14"
                     data-strokewidth="2.4"
                     data-draw="2.2"
                     data-filldelay="0.25"
@@ -1737,7 +1738,14 @@
       const reverse = root.getAttribute('data-reverse') === 'true';
       const startDelay = parseFloat(root.getAttribute('data-delay') || '0');
 
-      const chars = Array.from(text);
+      // 前后半句上下错落：以全角逗号「，」为界拆成两行，第二行右移 indent、下移 lineGap 形成阶梯；无逗号则保持单行（向下兼容）
+      const lineGap = fontSize * 1.12;
+      const indent = fontSize * 0.78;
+      const segments = text.split('，');
+      const flatChars = [];
+      segments.forEach(function (seg, li) {
+        Array.from(seg).forEach(function (ch, ci) { flatChars.push({ ch: ch, li: li, first: ci === 0 }); });
+      });
       const dash = Math.max(fontSize * 7, 200);
       const fallbackFont = '"Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", "STSong", "SimSun", Georgia, serif';
       const fsStack = (getComputedStyle(root).getPropertyValue('--font-serif') || '').trim() || fallbackFont;
@@ -1791,14 +1799,16 @@
       fillText.setAttribute('style', fontStyle);
       if (fillMode === 'wipe' && wipeRect) fillText.setAttribute('clip-path', 'url(#strokeMottoWipe)');
 
-      chars.forEach(function (ch) {
+      flatChars.forEach(function (item) {
         const s = document.createElementNS(NS, 'tspan');
         s.setAttribute('data-stroke-char', '');
-        s.textContent = ch;
+        if (item.li > 0 && item.first) { s.setAttribute('x', indent); s.setAttribute('dy', lineGap); }
+        s.textContent = item.ch;
         strokeText.appendChild(s);
         const f = document.createElementNS(NS, 'tspan');
         f.setAttribute('data-fill-char', '');
-        f.textContent = ch;
+        if (item.li > 0 && item.first) { f.setAttribute('x', indent); f.setAttribute('dy', lineGap); }
+        f.textContent = item.ch;
         fillText.appendChild(f);
       });
 
